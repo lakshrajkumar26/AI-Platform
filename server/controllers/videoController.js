@@ -1,12 +1,23 @@
 const Video = require("../models/Video");
 const fs = require("fs");
 const path = require("path");
-const pdf = require("pdf-parse");
+const { PDFParse } = require("pdf-parse");
 
 // helper → convert \ to /
 const normalizePath = (filePath) => {
   if (!filePath) return null;
   return filePath.replace(/\\/g, "/");
+};
+
+const extractPdfText = async (pdfPath) => {
+  const dataBuffer = fs.readFileSync(pdfPath);
+  const parser = new PDFParse({ data: dataBuffer });
+  try {
+    const result = await parser.getText();
+    return result.text || "";
+  } finally {
+    await parser.destroy();
+  }
 };
 
 // ================= UPLOAD =================
@@ -19,9 +30,7 @@ exports.uploadVideo = async (req, res) => {
     // If PDF is uploaded, extract content
     if (req.files?.pdf) {
       const pdfPath = req.files.pdf[0].path;
-      const dataBuffer = fs.readFileSync(pdfPath);
-      const pdfData = await pdf(dataBuffer);
-      blogContent = pdfData.text;
+      blogContent = await extractPdfText(pdfPath);
       
       // Optionally delete the PDF after extraction if not needed
       // fs.unlinkSync(pdfPath);
@@ -140,9 +149,7 @@ exports.updateVideo = async (req, res) => {
 
     if (req.files?.pdf) {
       const pdfPath = req.files.pdf[0].path;
-      const dataBuffer = fs.readFileSync(pdfPath);
-      const pdfData = await pdf(dataBuffer);
-      video.blogContent = pdfData.text;
+      video.blogContent = await extractPdfText(pdfPath);
     } else if (req.body.blogContent !== undefined) {
       video.blogContent = req.body.blogContent;
     }

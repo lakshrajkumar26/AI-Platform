@@ -169,40 +169,43 @@ export default function Admin() {
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title) return alert("Title is required");
+    if (type === "BLOG" && !pdfFile && !blogContent.trim()) {
+      return alert("For blog uploads, provide a PDF or enter blog content.");
+    }
     
     setLoading(true);
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("description", description);
-    formData.append("type", type);
-    formData.append("category", category);
-    
-    if (type === "BLOG") {
-      if (pdfFile) {
-        formData.append("pdf", pdfFile);
-      } else {
-        formData.append("blogContent", blogContent);
+    try {
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("description", description);
+      formData.append("type", type);
+      formData.append("category", category);
+      
+      if (type === "BLOG") {
+        if (pdfFile) {
+          formData.append("pdf", pdfFile);
+        } else {
+          formData.append("blogContent", blogContent);
+        }
       }
-    }
-    
-    if (videoFile) formData.append("video", videoFile);
-    if (thumbnailFile) {
-      try {
-        const croppedThumbnail = await buildCroppedThumbnail(
-          thumbnailFile,
-          thumbnailFocusX,
-          thumbnailFocusY,
-          thumbnailZoom
-        );
-        formData.append("thumbnail", croppedThumbnail);
-      } catch (cropError) {
-        console.error("Thumbnail crop failed, uploading original:", cropError);
-        formData.append("thumbnail", thumbnailFile);
-      }
-    }
 
-    const res = await uploadVideo(formData, token);
-    if (res) {
+      if (videoFile) formData.append("video", videoFile);
+      if (thumbnailFile) {
+        try {
+          const croppedThumbnail = await buildCroppedThumbnail(
+            thumbnailFile,
+            thumbnailFocusX,
+            thumbnailFocusY,
+            thumbnailZoom
+          );
+          formData.append("thumbnail", croppedThumbnail);
+        } catch (cropError) {
+          console.error("Thumbnail crop failed, uploading original:", cropError);
+          formData.append("thumbnail", thumbnailFile);
+        }
+      }
+
+      await uploadVideo(formData, token);
       alert("Uploaded successfully!");
       setTitle("");
       setDescription("");
@@ -214,10 +217,14 @@ export default function Admin() {
       setThumbnailZoom(1);
       setPdfFile(null);
       fetchContent();
-    } else {
-      alert("Upload failed");
+    } catch (uploadError) {
+      const message =
+        uploadError instanceof Error ? uploadError.message : "Upload failed";
+      alert(`Upload failed: ${message}`);
+      console.error("Upload failed:", uploadError);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleDelete = async (id: string) => {

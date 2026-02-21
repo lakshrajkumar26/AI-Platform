@@ -52,24 +52,32 @@ export const getSingleVideo = async (id: string): Promise<Video | null> => {
 export const uploadVideo = async (
   formData: FormData,
   token: string
-): Promise<Video | null> => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/videos`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: formData,
-    });
-    if (!response.ok) {
-      throw new Error(`Failed to upload video: ${response.statusText}`);
+): Promise<Video> => {
+  const response = await fetch(`${API_BASE_URL}/videos`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    let message = `Failed to upload video: ${response.statusText}`;
+    try {
+      const errorBody = await response.json();
+      if (errorBody?.error) {
+        message = errorBody.error;
+      } else if (errorBody?.message) {
+        message = errorBody.message;
+      }
+    } catch {
+      // keep fallback message when response isn't JSON
     }
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error uploading video:', error);
-    return null;
+    throw new Error(message);
   }
+
+  const data = await response.json();
+  return data;
 };
 
 // Update video (admin only)
