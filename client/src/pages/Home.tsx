@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { getVideos, type Video } from '@/services/api';
 
@@ -209,7 +209,7 @@ export default function Home() {
             <p>No content available for the selected filters.</p>
           </div>
         ) : (
-          <div className="vms-content-grid" style={styles.contentGrid}>
+        <div className="vms-content-grid" style={styles.contentGrid}>
             {filteredContent.map((item) => (
               <div key={item._id} style={styles.videoCard} onClick={() => handleCardClick(item._id)}>
                 <div style={styles.videoThumbnail}>
@@ -225,6 +225,9 @@ export default function Home() {
                 </div>
                 <div style={styles.cardInfo}>
                   <h3 style={styles.cardTitle}>{item.title}</h3>
+                  <p style={styles.cardDescription}>
+                    {item.description || 'No description available.'}
+                  </p>
                   <p style={styles.cardMeta}>
                     {item.category} - {new Date(item.createdAt).toLocaleDateString()}
                   </p>
@@ -273,14 +276,17 @@ const styles = {
   commandBar: {
     backgroundColor: '#151817',
     borderBottom: '2px solid #c8a951',
-    padding: '0 24px',
-    height: '76px',
+    padding: '0',
+    height: '68px',
     display: 'flex',
     alignItems: 'center',
     zIndex: 100,
   },
   commandBarContent: {
+    maxWidth: '1400px',
+    margin: '0 auto',
     width: '100%',
+    padding: '0 56px',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -368,6 +374,8 @@ const styles = {
     borderBottom: '1px solid #333',
   },
   filterControls: {
+    maxWidth: '1400px',
+    margin: '0 auto',
     width: '100%',
     display: 'flex',
     flexWrap: 'nowrap' as const,
@@ -420,15 +428,20 @@ const styles = {
     height: '36px',
   },
   heroSection: {
-    height: '560px',
+    minHeight: '560px',
+    maxWidth: '1400px',
+    width: 'calc(100% - 112px)',
+    margin: '0 auto',
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     display: 'flex',
-    alignItems: 'flex-end',
-    padding: '60px 28px',
+    alignItems: 'center',
+    padding: '90px 56px 56px',
+    borderRadius: '8px',
+    overflow: 'hidden',
   },
   heroContent: {
-    maxWidth: '860px',
+    maxWidth: '760px',
   },
   heroCategory: {
     color: '#c8a951',
@@ -469,27 +482,33 @@ const styles = {
     borderRadius: '6px',
   },
   mainContent: {
-    padding: '40px 16px',
+    maxWidth: '1400px',
+    margin: '0 auto',
+    padding: '48px 56px',
     flex: 1,
-    width: '100%',
+    width: '100%'
   },
   contentGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-    gap: '18px',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+    gap: '24px',
     width: '100%',
   },
   videoCard: {
+    backgroundColor: '#141414',
+    borderRadius: '8px',
+    overflow: 'hidden',
     cursor: 'pointer',
-    transition: 'transform 0.2s',
+    transition: 'transform 0.26s ease, box-shadow 0.26s ease',
+    minHeight: '460px',
   },
   videoThumbnail: {
     position: 'relative' as const,
-    aspectRatio: '16/9',
+    aspectRatio: '4/3',
     backgroundColor: '#1a1d1c',
     overflow: 'hidden',
-    border: '1px solid #333',
-    borderRadius: '6px',
+    border: 'none',
+    borderRadius: '0',
   },
   thumbnailImg: {
     width: '100%',
@@ -538,17 +557,29 @@ const styles = {
     borderRadius: '4px',
   },
   cardInfo: {
-    padding: '12px 0',
+    padding: '16px 16px 18px',
   },
   cardTitle: {
-    fontSize: '17px',
-    fontWeight: '700',
-    marginBottom: '6px',
+    fontSize: '20px',
+    fontWeight: '800',
+    lineHeight: '1.25',
+    marginBottom: '10px',
     color: '#fff',
+    letterSpacing: '-0.01em',
+  },
+  cardDescription: {
+    fontSize: '14px',
+    lineHeight: '1.6',
+    color: '#b3b3b3',
+    marginBottom: '12px',
+    display: '-webkit-box',
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: 'vertical' as const,
+    overflow: 'hidden',
   },
   cardMeta: {
     fontSize: '12px',
-    color: '#888',
+    color: '#b3b3b3',
   },
   loadingContainer: {
     display: 'flex',
