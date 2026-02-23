@@ -19,7 +19,7 @@ export default function Home() {
   const [allContent, setAllContent] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState<'All' | string>('All');
   const [selectedType, setSelectedType] = useState('All');
   const [sortBy, setSortBy] = useState('latest');
   const [filterDate, setFilterDate] = useState('');
@@ -49,7 +49,10 @@ export default function Home() {
       const matchesSearch =
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.description.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
+      const matchesCategory =
+  !selectedCategory || selectedCategory === 'All'
+    ? true
+    : item.category === selectedCategory;
       const matchesType = selectedType === 'All' || item.type === selectedType;
 
       let matchesDate = true;
@@ -73,109 +76,77 @@ export default function Home() {
     <div style={styles.container}>
       <style>{cssStyles}</style>
 
-      <header style={styles.commandBar}>
-        <div style={styles.commandBarContent}>
-          <div style={styles.logo}>
-            <span style={styles.logoIcon}>IN</span>
-            <div>
-              <div style={styles.logoTitle}>VMS</div>
-              <div style={styles.logoSubtitle}>Visual Media System</div>
-            </div>
-          </div>
+      <header className="netflix-nav">
+  <div className="nav-left">
+    <span className="nav-logo">VMS</span>
+  </div>
 
-          <div style={styles.searchContainer}>
-            <div style={styles.searchShell}>
-              <span style={styles.searchIcon}>SEARCH</span>
-              <input
-                type="text"
-                placeholder="Search by title or description..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={styles.searchInput}
-              />
-            </div>
-          </div>
+  <nav className="nav-center">
+    <span
+  className="nav-link"
+  onClick={() => {
+    setSelectedCategory('All');
+    setSelectedType('All');
+    setSortBy('latest');
+    setSearchQuery('');
+  }}
+>
+  Home
+</span>
+    <span
+  className="nav-link"
+  onClick={() => setSelectedType('VIDEO')}
+>
+  Videos
+</span>
+    <span
+  className="nav-link"
+  onClick={() => setSelectedType('BLOG')}
+>
+  Blogs
+</span>
+    <span
+  className="nav-link"
+  onClick={() => setSortBy('latest')}
+>
+  Latest
+</span>
+    <span
+  className="nav-link"
+  onClick={() => setSortBy('oldest')}
+>
+  Oldest
+</span>
+    <span className="nav-link">My Library</span>
 
-          <div style={styles.headerRight}>
-            <a href="/admin" style={styles.adminLink}>
-              ADMIN PANEL
-            </a>
-          </div>
-        </div>
-      </header>
+    <select
+  className="nav-dropdown"
+  value={selectedCategory}
+  onChange={(e) => setSelectedCategory(e.target.value)}
+>
+  <option value="" disabled>
+    Category
+  </option>
 
-      <div style={styles.filterBar}>
-        <div className="vms-filter-controls" style={styles.filterControls}>
-          <div style={styles.filterField}>
-            <label style={styles.filterLabel}>CATEGORY</label>
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              style={styles.selectInput}
-            >
-              {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </div>
+  {CATEGORIES.filter(c => c !== 'All').map(cat => (
+    <option key={cat} value={cat}>
+      {cat}
+    </option>
+  ))}
+</select>
+  </nav>
 
-          <div style={styles.filterField}>
-            <label style={styles.filterLabel}>SORT</label>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              style={styles.selectInput}
-            >
-              <option value="latest">LATEST UPLOAD</option>
-              <option value="oldest">OLDEST UPLOAD</option>
-              <option value="date">SPECIFIC DATE</option>
-            </select>
-          </div>
-
-          <div style={styles.filterField}>
-            <label style={styles.filterLabel}>TYPE</label>
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-              style={styles.selectInput}
-            >
-              <option value="All">ALL</option>
-              <option value="VIDEO">VIDEO</option>
-              <option value="BLOG">BLOG</option>
-            </select>
-          </div>
-
-          {sortBy === 'date' && (
-            <div style={styles.filterField}>
-              <label style={styles.filterLabel}>DATE</label>
-              <input
-                type="date"
-                value={filterDate}
-                onChange={(e) => setFilterDate(e.target.value)}
-                style={styles.dateInput}
-              />
-            </div>
-          )}
-
-          <div style={styles.filterField}>
-            <label style={styles.filterLabel}>ACTION</label>
-            <button
-              type="button"
-              style={styles.clearBtn}
-              onClick={() => {
-                setSelectedCategory('All');
-                setSelectedType('All');
-                setSortBy('latest');
-                setFilterDate('');
-              }}
-            >
-              RESET
-            </button>
-          </div>
-        </div>
-      </div>
+  <div className="nav-right">
+    <input
+      className="nav-search"
+      placeholder="Search"
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+    />
+    <button className="nav-admin">ADMIN</button>
+  </div>
+</header>
+      
 
       {featuredContent && !searchQuery && selectedCategory === 'All' && (
         <section
@@ -306,7 +277,97 @@ const cssStyles = `
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
-  
+  .netflix-nav {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 64px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.85), rgba(0,0,0,0));
+  display: flex;
+  align-items: center;
+  padding: 0 48px;
+  z-index: 1000;
+}
+
+.nav-left {
+  flex: 1;
+}
+
+.nav-logo {
+  font-size: 22px;
+  font-weight: 900;
+  color: #E50914;
+}
+
+.nav-center {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: nowrap;
+}
+
+.nav-center > * {
+  flex: 0 0 auto;
+}
+
+.nav-link {
+  font-size: 14px;
+  color: #e5e5e5;
+  cursor: pointer;
+}
+
+.nav-link:hover {
+  color: #fff;
+}
+
+.nav-dropdown {
+  background: transparent;
+  color: #e5e5e5;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+
+  padding-right: 18px;
+  min-width: unset;
+}
+
+/* Arrow color */
+.nav-dropdown::-ms-expand {
+  display: none;
+}
+
+.nav-dropdown:focus {
+  outline: none;
+}
+  .nav-dropdown option {
+  background-color: #141414;
+  color: #ffffff;
+}
+
+.nav-right {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  align-items: center;
+}
+
+.nav-search {
+  background: rgba(0,0,0,0.6);
+  border: 1px solid #333;
+  padding: 6px 10px;
+  color: #fff;
+  border-radius: 4px;
+}
+
+.nav-admin {
+  background: #E50914;
+  border: none;
+  color: white;
+  padding: 8px 14px;
+  font-weight: 700;
+  border-radius: 4px;
+}
   .netflix-card-container {
     position: relative;
     z-index: 1;
@@ -656,7 +717,7 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundPosition: 'center',
     display: 'flex',
     alignItems: 'center',
-    padding: '90px 56px 56px',
+    padding: '140px 56px 56px',
     borderRadius: '8px',
     overflow: 'hidden',
   },
