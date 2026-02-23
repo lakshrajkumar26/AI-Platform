@@ -1,5 +1,5 @@
 /* ============================================
-   GLOBAL STYLES & LAYOUT
+   NETFLIX THEME GLOBAL STYLES
    ============================================ */
 
 * {
@@ -10,16 +10,16 @@
 
 html {
   scroll-behavior: smooth;
+  background-color: #141414;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f5f5f5;
-  color: #333;
+  background-color: #141414;
+  color: #fff;
+  overflow-x: hidden;
 }
 
 #root {
@@ -27,370 +27,46 @@ body {
   min-height: 100vh;
 }
 
-/* ============================================
-   HEADER STYLES
-   ============================================ */
-
-.header-sticky {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-  padding: 1rem 0;
+/* Netflix Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-.header-title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: -0.5px;
+::-webkit-scrollbar-track {
+  background: #141414;
 }
 
-.header-subtitle {
-  font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.7);
-  margin-top: 0.25rem;
-}
-
-/* ============================================
-   CATEGORY NAVIGATION
-   ============================================ */
-
-.category-nav {
-  display: flex;
-  gap: 0.75rem;
-  overflow-x: auto;
-  padding: 1.5rem 0;
-  margin-bottom: 2rem;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
-}
-
-.category-nav::-webkit-scrollbar {
-  height: 4px;
-}
-
-.category-nav::-webkit-scrollbar-track {
-  background: #e0e0e0;
-  border-radius: 2px;
-}
-
-.category-nav::-webkit-scrollbar-thumb {
-  background: #999;
-  border-radius: 2px;
-}
-
-.category-tab {
-  padding: 0.625rem 1.25rem;
-  border: 2px solid #ddd;
-  background: #fff;
-  color: #333;
-  border-radius: 24px;
-  font-weight: 500;
-  font-size: 0.95rem;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.3s ease;
-}
-
-.category-tab:hover {
-  border-color: #1a1a2e;
-  color: #1a1a2e;
-  transform: translateY(-2px);
-}
-
-.category-tab.active {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  color: #fff;
-  border-color: #1a1a2e;
-  box-shadow: 0 4px 12px rgba(26, 26, 46, 0.3);
-}
-
-/* ============================================
-   MASONRY GRID LAYOUT
-   ============================================ */
-
-.masonry-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 3rem;
-}
-
-@media (max-width: 1200px) {
-  .masonry-grid {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1.25rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .masonry-grid {
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .masonry-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-}
-
-/* ============================================
-   CONTENT CARD STYLES
-   ============================================ */
-
-.content-card {
-  background: #fff;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  cursor: pointer;
-}
-
-.content-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
-}
-
-.content-card-image {
-  position: relative;
-  width: 100%;
-  padding-bottom: 66.67%; /* 3:2 aspect ratio */
-  overflow: hidden;
-  background: #e0e0e0;
-}
-
-.content-card-image img {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
-}
-
-.content-card:hover .content-card-image img {
-  transform: scale(1.05);
-}
-
-.play-button {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 60px;
-  height: 60px;
-  background: rgba(0, 0, 0, 0.5);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: all 0.3s ease;
-}
-
-.content-card:hover .play-button {
-  opacity: 1;
-  background: rgba(0, 0, 0, 0.7);
-}
-
-.content-card-content {
-  padding: 1.25rem;
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.content-badge {
-  display: inline-block;
-  padding: 0.35rem 0.75rem;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  color: #fff;
+::-webkit-scrollbar-thumb {
+  background: #333;
   border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  width: fit-content;
 }
 
-.content-card-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1a1a2e;
-  margin: 0.75rem 0 0.5rem 0;
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+::-webkit-scrollbar-thumb:hover {
+  background: #444;
 }
 
-.content-card-description {
-  font-size: 0.9rem;
-  color: #666;
-  line-height: 1.5;
-  margin-bottom: 0.75rem;
-  flex-grow: 1;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+/* Utility Classes */
+.netflix-red {
+  color: #e50914;
 }
 
-.content-card-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 0.75rem;
-  border-top: 1px solid #eee;
-  font-size: 0.85rem;
+.bg-netflix-red {
+  background-color: #e50914;
 }
 
-/* ============================================
-   CONTAINER & SPACING
-   ============================================ */
-
-.container {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 1rem;
+/* Transitions */
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
 }
 
-main {
-  padding: 2rem 0;
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-/* ============================================
-   LOADING & EMPTY STATES
-   ============================================ */
-
-.loading-spinner {
-  display: inline-block;
-  width: 40px;
-  height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #1a1a2e;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-.empty-state {
-  text-align: center;
-  padding: 4rem 2rem;
-}
-
-.empty-state-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1a1a2e;
-  margin-bottom: 0.5rem;
-}
-
-.empty-state-description {
-  font-size: 1rem;
-  color: #666;
-}
-
-/* ============================================
-   UTILITY CLASSES
-   ============================================ */
-
-.text-center {
-  text-align: center;
-}
-
-.py-8 {
-  padding-top: 2rem;
-  padding-bottom: 2rem;
-}
-
-.py-16 {
-  padding-top: 4rem;
-  padding-bottom: 4rem;
-}
-
-.text-muted-foreground {
-  color: #999;
-}
-
-.text-lg {
-  font-size: 1.125rem;
-}
-
-/* ============================================
-   RESPONSIVE ADJUSTMENTS
-   ============================================ */
-
+/* Responsive Adjustments */
 @media (max-width: 768px) {
-  .header-title {
-    font-size: 1.5rem;
-  }
-
-  .category-nav {
-    gap: 0.5rem;
-    padding: 1rem 0;
-    margin-bottom: 1.5rem;
-  }
-
-  .category-tab {
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
-  }
-
-  .content-card-content {
-    padding: 1rem;
-  }
-
-  main {
-    padding: 1rem 0;
-  }
-}
-
-@media (max-width: 480px) {
-  .header-sticky {
-    padding: 0.75rem 0;
-  }
-
-  .header-title {
-    font-size: 1.25rem;
-  }
-
-  .container {
-    padding: 0 0.75rem;
-  }
-
-  .masonry-grid {
-    gap: 0.75rem;
-  }
-
-  .content-card-content {
-    padding: 0.875rem;
-  }
-
-  .content-card-title {
-    font-size: 1rem;
-  }
-
-  .content-card-description {
-    font-size: 0.85rem;
+  body {
+    font-size: 14px;
   }
 }

@@ -974,3 +974,46 @@ input:focus-visible {
 html {
   background-color: #0b0d0c;
 }
+const cssStyles = `
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* NETFLIX HOVER EFFECT */
+.vms-content-grid > div {
+  transition: transform 0.35s ease;
+  will-change: transform;
+}
+
+.vms-content-grid > div:hover {
+  transform: scale(1.18);
+  z-index: 20;
+}
+
+.vms-content-grid > div:hover .playOverlay {
+  opacity: 1;
+}
+
+.vms-content-grid > div:hover .cardInfo {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* RESPONSIVE FIX */
+@media (max-width: 1200px) {
+  .vms-content-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .vms-content-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .vms-content-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}

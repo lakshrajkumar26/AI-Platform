@@ -14,6 +14,7 @@ const CATEGORIES = [
 ];
 
 export default function Home() {
+  const [activeItem, setActiveItem] = useState<Video | null>(null);
   const [, setLocation] = useLocation();
   const [allContent, setAllContent] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
@@ -209,35 +210,88 @@ export default function Home() {
             <p>No content available for the selected filters.</p>
           </div>
         ) : (
-        <div className="vms-content-grid" style={styles.contentGrid}>
+          <div className="vms-content-grid" style={styles.contentGrid}>
             {filteredContent.map((item) => (
-              <div key={item._id} style={styles.videoCard} onClick={() => handleCardClick(item._id)}>
-                <div style={styles.videoThumbnail}>
-                  {item.thumbnailPath ? (
-                    <img src={item.thumbnailPath} alt={item.title} style={styles.thumbnailImg} />
-                  ) : (
-                    <div style={styles.placeholderThumb}>{item.type === 'VIDEO' ? 'VIDEO' : 'BLOG'}</div>
-                  )}
-                  <div style={styles.playOverlay}>
-                    <div style={styles.playIcon}>{item.type === 'VIDEO' ? 'PLAY' : 'VIEW'}</div>
-                  </div>
-                  <div style={styles.cardBadge}>{item.type}</div>
-                </div>
-                <div style={styles.cardInfo}>
-                  <h3 style={styles.cardTitle}>{item.title}</h3>
-                  <p style={styles.cardDescription}>
-                    {item.description || 'No description available.'}
-                  </p>
-                  <p style={styles.cardMeta}>
-                    {item.category} - {new Date(item.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
+              <div
+  key={item._id}
+  className="netflix-card-container"
+  onClick={() => setActiveItem(item)}
+>
+  <div className="netflix-card">
+    {/* THUMBNAIL */}
+    <div className="video-thumbnail">
+      {item.thumbnailPath ? (
+        <img src={item.thumbnailPath} alt={item.title} />
+      ) : (
+        <div className="placeholder-thumb">
+          {item.type}
+        </div>
+      )}
+
+      <div className="play-overlay">
+        <div className="play-icon">
+          {item.type === 'VIDEO' ? 'PLAY' : 'VIEW'}
+        </div>
+      </div>
+
+      <div className="card-badge">{item.type}</div>
+    </div>
+
+    {/* POPUP (CHILD OF SAME CARD) */}
+    <div className="card-info-popup">
+      <h3>{item.title}</h3>
+      <p>{item.description || 'No description available.'}</p>
+      <button
+  onClick={(e) => {
+    e.stopPropagation();
+    setActiveItem(item);
+  }}
+>
+  {item.type === 'VIDEO' ? '▶ Play' : '📖 Read'}
+</button>
+    </div>
+  </div>
+</div>
             ))}
           </div>
         )}
       </main>
+      {activeItem && (
+  <div className="netflix-modal-backdrop" onClick={() => setActiveItem(null)}>
+    <div
+      className="netflix-modal"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button className="modal-close" onClick={() => setActiveItem(null)}>
+        ✕
+      </button>
 
+      <div className="modal-hero">
+        <img src={activeItem.thumbnailPath} alt={activeItem.title} />
+      </div>
+
+      <div className="modal-content">
+        <h1>{activeItem.title}</h1>
+
+        <div className="modal-meta">
+          <span>{activeItem.category}</span>
+          <span>{activeItem.type}</span>
+        </div>
+
+        <p>{activeItem.description}</p>
+
+        <div className="modal-actions">
+          <button
+            className="modal-play"
+            onClick={() => handleCardClick(activeItem._id)}
+          >
+            {activeItem.type === 'VIDEO' ? '▶ Play' : '📖 Read'}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
       <footer style={styles.footer}>
         <div style={styles.footerContent}>
           <p>VMS - Visual Media System | Secure Platform for Armed Forces and Defence Personnel</p>
@@ -252,19 +306,184 @@ const cssStyles = `
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
-  @media (max-width: 1100px) {
-    .vms-content-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    }
+  
+  .netflix-card-container {
+    position: relative;
+    z-index: 1;
+    transition: transform 0.3s ease;
   }
-  @media (max-width: 720px) {
-    .vms-content-grid {
-      grid-template-columns: 1fr !important;
-    }
+
+  .netflix-card-container:hover {
+    z-index: 100;
+    transform: scale(1.05);
   }
+
+  .netflix-card-container:hover .card-info-popup {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .netflix-card-container:hover .play-overlay {
+    opacity: 1;
+  }
+
+  .netflix-card-container:hover .video-thumbnail {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+  }
+    .netflix-card-container {
+  position: relative;
+  z-index: 1;
+}
+
+.netflix-card-container:hover {
+  z-index: 100;
+}
+
+.netflix-card {
+  position: relative;
+}
+
+/* Thumbnail */
+.video-thumbnail {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+.video-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Play overlay */
+.play-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.netflix-card-container:hover .play-overlay {
+  opacity: 1;
+}
+
+/* 🔥 POPUP */
+.card-info-popup {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #181818;
+  padding: 16px;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+  transition: all 0.25s ease;
+}
+
+.netflix-card-container:hover .card-info-popup {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: none;
+}
+  .netflix-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.netflix-modal {
+  width: 900px;
+  max-width: 95%;
+  background: #141414;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  animation: modalIn 0.3s ease;
+}
+
+@keyframes modalIn {
+  from {
+    transform: translateY(40px) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(0,0,0,0.7);
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.modal-hero img {
+  width: 100%;
+  height: 420px;
+  object-fit: cover;
+}
+
+.modal-content {
+  padding: 24px;
+}
+
+.modal-content h1 {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.modal-meta {
+  display: flex;
+  gap: 16px;
+  color: #aaa;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.modal-actions {
+  margin-top: 24px;
+}
+
+.modal-play {
+  background: #E50914;
+  color: #fff;
+  border: none;
+  padding: 14px 28px;
+  font-size: 14px;
+  font-weight: 800;
+  border-radius: 4px;
+  cursor: pointer;
+}
 `;
 
-const styles = {
+const styles: Record<string, React.CSSProperties> = {
   container: {
     backgroundColor: '#0b0d0c',
     color: '#e8e8e8',
@@ -292,6 +511,7 @@ const styles = {
     alignItems: 'center',
     gap: '24px',
   },
+  
   logo: {
     display: 'flex',
     alignItems: 'center',
@@ -451,12 +671,12 @@ const styles = {
     marginBottom: '12px',
   },
   heroTitle: {
-    fontSize: '64px',
+    fontSize: '56px',
     fontWeight: '900',
     lineHeight: '1.1',
     marginBottom: '20px',
-    textTransform: 'uppercase' as const,
-    color: '#c8a951',
+    textTransform: 'none',
+    color: '#fff',
     textShadow: '0 4px 18px rgba(0,0,0,0.5)',
   },
   heroDescription: {
@@ -471,44 +691,46 @@ const styles = {
     gap: '16px',
   },
   btnWatch: {
-    backgroundColor: '#c8a951',
-    color: '#000',
+    backgroundColor: '#E50914',
+    color: '#fff',
     border: 'none',
     padding: '14px 28px',
     fontSize: '14px',
     fontWeight: '900',
     cursor: 'pointer',
     letterSpacing: '1px',
-    borderRadius: '6px',
+    borderRadius: '4px',
   },
   mainContent: {
     maxWidth: '1400px',
     margin: '0 auto',
     padding: '48px 56px',
     flex: 1,
-    width: '100%'
+    width: '100%',
+    overflow: 'visible',
   },
   contentGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-    gap: '24px',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+    gap: '32px',
     width: '100%',
+    overflow: 'visible',
   },
   videoCard: {
-    backgroundColor: '#141414',
-    borderRadius: '8px',
-    overflow: 'hidden',
+    backgroundColor: '#181818',
+    borderRadius: '6px',
     cursor: 'pointer',
-    transition: 'transform 0.26s ease, box-shadow 0.26s ease',
-    minHeight: '460px',
+    position: 'relative',
+    height: 'fit-content',
   },
   videoThumbnail: {
-    position: 'relative' as const,
-    aspectRatio: '4/3',
-    backgroundColor: '#1a1d1c',
+    position: 'relative',
+    zIndex: 2,
+    aspectRatio: '16 / 9',
+    backgroundColor: '#181818',
+    borderRadius: '6px',
     overflow: 'hidden',
-    border: 'none',
-    borderRadius: '0',
+    transition: 'all 0.3s ease',
   },
   thumbnailImg: {
     width: '100%',
@@ -531,17 +753,20 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.38)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     opacity: 0,
-    transition: 'opacity 0.2s',
+    transition: 'opacity 0.3s',
   },
   playIcon: {
-    fontSize: '14px',
-    color: '#c8a951',
-    fontWeight: '800',
+    fontSize: '12px',
+    padding: '10px 16px',
+    backgroundColor: '#E50914',
+    color: '#fff',
+    fontWeight: '900',
+    borderRadius: '4px',
     letterSpacing: '1px',
   },
   cardBadge: {
@@ -555,31 +780,51 @@ const styles = {
     fontWeight: '800',
     border: '1px solid #c8a951',
     borderRadius: '4px',
+    zIndex: 3,
   },
   cardInfo: {
-    padding: '16px 16px 18px',
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    padding: '16px',
+    backgroundColor: '#181818',
+    borderBottomLeftRadius: '6px',
+    borderBottomRightRadius: '6px',
+    boxShadow: '0 10px 20px rgba(0,0,0,0.5)',
+    opacity: 0,
+    visibility: 'hidden',
+    transition: 'all 0.3s ease',
+    transform: 'translateY(-10px)',
   },
   cardTitle: {
-    fontSize: '20px',
-    fontWeight: '800',
-    lineHeight: '1.25',
-    marginBottom: '10px',
+    fontSize: '16px',
+    fontWeight: '700',
     color: '#fff',
-    letterSpacing: '-0.01em',
+    marginBottom: '8px',
   },
   cardDescription: {
-    fontSize: '14px',
-    lineHeight: '1.6',
-    color: '#b3b3b3',
-    marginBottom: '12px',
+    fontSize: '13px',
+    lineHeight: '1.4',
+    color: '#d1d1d1',
+    marginBottom: '16px',
     display: '-webkit-box',
-    WebkitLineClamp: 2,
-    WebkitBoxOrient: 'vertical' as const,
+    WebkitLineClamp: 3,
+    WebkitBoxOrient: 'vertical',
     overflow: 'hidden',
   },
-  cardMeta: {
+  cardAction: {
+    backgroundColor: '#E50914',
+    color: '#fff',
+    border: 'none',
+    padding: '10px 16px',
     fontSize: '12px',
-    color: '#b3b3b3',
+    fontWeight: '800',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    width: '100%',
+    transition: 'background-color 0.2s',
   },
   loadingContainer: {
     display: 'flex',
