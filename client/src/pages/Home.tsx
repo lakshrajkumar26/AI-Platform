@@ -189,8 +189,12 @@ export default function Home() {
   </div>
 </div>
 
-{/* 🔥 NETFLIX FIRST ROW INSIDE HERO */}
-<div style={styles.heroRow}>
+{/* 🔥 HERO ROW (LABEL + CARDS TOGETHER) */}
+<div style={styles.heroRowWrapper}>
+  <div style={styles.netflixRowTitle}>
+  Latest
+</div>
+
   <div style={styles.heroGrid}>
     {filteredContent.slice(0, 4).map((item) => (
       <div
@@ -266,18 +270,10 @@ export default function Home() {
     </div>
 
     {/* POPUP (CHILD OF SAME CARD) */}
-    <div className="card-info-popup">
-      <h3>{item.title}</h3>
-      <p>{item.description || 'No description available.'}</p>
-      <button
-  onClick={(e) => {
-    e.stopPropagation();
-    setActiveItem(item);
-  }}
->
-  {item.type === 'VIDEO' ? '▶ Play' : '📖 Read'}
-</button>
-    </div>
+   <div className="card-info-popup">
+  <h3>{item.title}</h3>
+  <p>{item.description || 'No description available.'}</p>
+</div>
   </div>
 </div>
             ))}
@@ -875,7 +871,7 @@ heroFadeBottom: {
   pointerEvents: 'none',
 },
 
-heroRow: {
+heroRowWrapper: {
   position: 'absolute',
   bottom: '48px',
   left: '56px',
@@ -883,6 +879,24 @@ heroRow: {
   zIndex: 50,
 },
 
+heroRowLabel: {
+  fontSize: '18px',
+  fontWeight: '800',
+  color: '#e5e5e5',
+  marginBottom: '12px',
+  letterSpacing: '0.4px',
+},
+netflixRowTitle: {
+  fontSize: '18px',
+  fontWeight: '700',
+  color: '#ffffff',
+  letterSpacing: '0.3px',
+
+  marginBottom: '8px',          // 👈 small logical spacing
+  transform: 'translateY(-6px)', // 👈 visual air (Netflix trick)
+
+  textShadow: '0 1px 10px rgba(0,0,0,0.85)',
+},
 heroGrid: {
   display: 'grid',
   gridTemplateColumns: 'repeat(4, 1fr)',
