@@ -119,13 +119,13 @@ export default function Home() {
 </span>
     <span className="nav-link">My Library</span>
 
-    <select
+<select
   className="nav-dropdown"
   value={selectedCategory}
   onChange={(e) => setSelectedCategory(e.target.value)}
 >
-  <option value="" disabled>
-    Category
+  <option value="All">
+    Browse by Category
   </option>
 
   {CATEGORIES.filter(c => c !== 'All').map(cat => (
@@ -153,20 +153,77 @@ export default function Home() {
           style={{
             ...styles.heroSection,
             backgroundImage: featuredContent.thumbnailPath
-              ? `linear-gradient(rgba(11,13,12,0.35), rgba(11,13,12,0.62)), url('${featuredContent.thumbnailPath}')`
-              : undefined,
+  ? `
+    linear-gradient(
+  to bottom,
+  rgba(0,0,0,0) 0%,
+  rgba(0,0,0,0.15) 50%,
+  rgba(0,0,0,0.45) 70%,
+  rgba(11,13,12,0.65) 88%,
+#0b0d0c 100%
+),
+    linear-gradient(
+      to right,
+      rgba(0,0,0,0.75) 0%,
+      rgba(0,0,0,0.45) 40%,
+      rgba(0,0,0,0.15) 70%,
+      rgba(0,0,0,0) 100%
+    ),
+    url('${featuredContent.thumbnailPath}')
+  `
+  : undefined,
           }}
         >
+           
           <div style={styles.heroContent}>
-            <div style={styles.heroCategory}>{featuredContent.category}</div>
-            <h1 style={styles.heroTitle}>{featuredContent.title}</h1>
-            <p style={styles.heroDescription}>{featuredContent.description}</p>
-            <div style={styles.heroButtons}>
-              <button style={styles.btnWatch} onClick={() => handleCardClick(featuredContent._id)}>
-                {featuredContent.type === 'VIDEO' ? 'WATCH VIDEO' : 'READ BLOG'}
-              </button>
+  <div style={styles.heroCategory}>{featuredContent.category}</div>
+  <h1 style={styles.heroTitle}>{featuredContent.title}</h1>
+  <p style={styles.heroDescription}>{featuredContent.description}</p>
+  <div style={styles.heroButtons}>
+    <button
+      style={styles.btnWatch}
+      onClick={() => handleCardClick(featuredContent._id)}
+    >
+      {featuredContent.type === 'VIDEO' ? 'WATCH VIDEO' : 'READ BLOG'}
+    </button>
+  </div>
+</div>
+
+{/* 🔥 NETFLIX FIRST ROW INSIDE HERO */}
+<div style={styles.heroRow}>
+  <div style={styles.heroGrid}>
+    {filteredContent.slice(0, 4).map((item) => (
+      <div
+        key={item._id}
+        className="netflix-card-container"
+        onClick={() => setActiveItem(item)}
+      >
+        <div className="netflix-card">
+          <div className="video-thumbnail">
+            {item.thumbnailPath ? (
+              <img src={item.thumbnailPath} alt={item.title} />
+            ) : (
+              <div className="placeholder-thumb">{item.type}</div>
+            )}
+            <div className="play-overlay">
+              <div className="play-icon">
+                {item.type === 'VIDEO' ? 'PLAY' : 'VIEW'}
+              </div>
             </div>
+            <div className="card-badge">{item.type}</div>
           </div>
+
+          <div className="card-info-popup">
+            <h3>{item.title}</h3>
+            <p>{item.description || 'No description available.'}</p>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
+
+<div style={styles.heroFadeBottom} />
         </section>
       )}
 
@@ -182,7 +239,7 @@ export default function Home() {
           </div>
         ) : (
           <div className="vms-content-grid" style={styles.contentGrid}>
-            {filteredContent.map((item) => (
+            {filteredContent.slice(4).map((item) => (
               <div
   key={item._id}
   className="netflix-card-container"
@@ -327,8 +384,18 @@ const cssStyles = `
   font-size: 14px;
   cursor: pointer;
 
-  padding-right: 18px;
-  min-width: unset;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  padding: 0;
+  margin: 0;
+
+  line-height: 1;
+  height: 16px;
+
+  display: inline-flex;
+  align-items: center;
 }
 
 /* Arrow color */
@@ -430,7 +497,43 @@ const cssStyles = `
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.3s ease;
+}
+
+.play-icon {
+  font-size: 12px;
+  padding: 10px 16px;
+  background: #E50914;
+  color: #fff;
+  font-weight: 900;
+  border-radius: 4px;
+  letter-spacing: 1px;
+}
+
+.card-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0,0,0,0.8);
+  color: #c8a951;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 800;
+  border: 1px solid #c8a951;
+  border-radius: 4px;
+  z-index: 3;
+}
+
+.placeholder-thumb {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #181818;
+  font-size: 14px;
+  font-weight: 700;
+  color: #c8a951;
 }
 
 .netflix-card-container:hover .play-overlay {
@@ -459,6 +562,37 @@ const cssStyles = `
   transform: translateY(0);
   pointer-events: none;
 }
+
+.card-info-popup h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.card-info-popup p {
+  font-size: 13px;
+  line-height: 1.4;
+  color: #d1d1d1;
+  margin-bottom: 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-info-popup button {
+  background: #E50914;
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+}
+
   .netflix-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -489,7 +623,10 @@ const cssStyles = `
     opacity: 1;
   }
 }
-
+.netflix-card-container {
+  position: relative;
+  z-index: 10;
+}
 .modal-close {
   position: absolute;
   top: 16px;
@@ -541,6 +678,11 @@ const cssStyles = `
   font-weight: 800;
   border-radius: 4px;
   cursor: pointer;
+}
+
+  .vms-content-grid {
+  position: relative;
+  z-index: 10;
 }
 `;
 
@@ -709,21 +851,48 @@ const styles: Record<string, React.CSSProperties> = {
     height: '36px',
   },
   heroSection: {
-    minHeight: '560px',
-    maxWidth: '1400px',
-    width: 'calc(100% - 112px)',
-    margin: '0 auto',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    display: 'flex',
-    alignItems: 'center',
-    padding: '140px 56px 56px',
-    borderRadius: '8px',
-    overflow: 'hidden',
-  },
+  position: 'relative',
+  height: '92vh',
+  minHeight: '820px',
+  width: '100%',
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  paddingLeft: '56px',
+  paddingRight: '56px',
+  paddingTop: '120px',
+  overflow: 'hidden',
+},
+
+heroFadeBottom: {
+  position: 'absolute',
+  bottom: '-1px',
+  left: 0,
+  right: 0,
+  height: '160px',
+  background: 'linear-gradient(to bottom, rgba(11,13,12,0), #0b0d0c 80%)',
+  zIndex: 2,
+  pointerEvents: 'none',
+},
+
+heroRow: {
+  position: 'absolute',
+  bottom: '48px',
+  left: '56px',
+  right: '56px',
+  zIndex: 5,
+},
+
+heroGrid: {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(4, 1fr)',
+  gap: '32px',
+  width: '100%',
+},
+
   heroContent: {
-    maxWidth: '760px',
-  },
+  maxWidth: '680px',
+  zIndex: 2,
+},
   heroCategory: {
     color: '#c8a951',
     fontSize: '14px',
@@ -762,20 +931,21 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: '1px',
     borderRadius: '4px',
   },
-  mainContent: {
-    maxWidth: '1400px',
-    margin: '0 auto',
-    padding: '48px 56px',
-    flex: 1,
-    width: '100%',
-    overflow: 'visible',
-  },
+ mainContent: {
+  maxWidth: '1400px',
+  margin: '0 auto',
+  padding: '48px 56px',
+  flex: 1,
+  width: '100%',
+  backgroundColor: '#0b0d0c',
+},
   contentGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+    gridTemplateColumns: 'repeat(4, 1fr)',
     gap: '32px',
     width: '100%',
     overflow: 'visible',
+    justifyContent: 'start',
   },
   videoCard: {
     backgroundColor: '#181818',
