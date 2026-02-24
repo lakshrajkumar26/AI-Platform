@@ -14,6 +14,8 @@ const CATEGORIES = [
 ];
 
 export default function Home() {
+  const ITEMS_PER_PAGE = 12;
+const [currentPage, setCurrentPage] = useState(1);
   const [activeItem, setActiveItem] = useState<Video | null>(null);
   const [, setLocation] = useLocation();
   const [allContent, setAllContent] = useState<Video[]>([]);
@@ -22,7 +24,7 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<'All' | string>('All');
   const [selectedType, setSelectedType] = useState('All');
   const [sortBy, setSortBy] = useState('latest');
-  const [filterDate, setFilterDate] = useState('');
+  
 
   useEffect(() => {
     const loadContent = async () => {
@@ -56,10 +58,7 @@ export default function Home() {
       const matchesType = selectedType === 'All' || item.type === selectedType;
 
       let matchesDate = true;
-      if (sortBy === 'date' && filterDate) {
-        const itemDate = new Date(item.createdAt).toISOString().split('T')[0];
-        matchesDate = itemDate === filterDate;
-      }
+      
 
       return matchesSearch && matchesCategory && matchesType && matchesDate;
     })
@@ -69,6 +68,7 @@ export default function Home() {
       if (sortBy === 'oldest') return dateA - dateB;
       return dateB - dateA;
     });
+  // HERO ROW already uses first 4
 
   const featuredContent = filteredContent.length > 0 ? filteredContent[0] : null;
 
@@ -291,7 +291,10 @@ export default function Home() {
       </button>
 
       <div className="modal-hero">
-        <img src={activeItem.thumbnailPath} alt={activeItem.title} />
+        <img
+  src={activeItem.thumbnailPath || '/placeholder.jpg'}
+  alt={activeItem.title}
+/>
       </div>
 
       <div className="modal-content">
