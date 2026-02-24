@@ -555,6 +555,7 @@ const cssStyles = `
   transform: translateY(-10px);
   pointer-events: none;
   transition: all 0.25s ease;
+  z-index: 200;
 }
 
 .netflix-card-container:hover .card-info-popup {
@@ -860,7 +861,7 @@ const styles: Record<string, React.CSSProperties> = {
   paddingLeft: '56px',
   paddingRight: '56px',
   paddingTop: '120px',
-  overflow: 'hidden',
+  overflow: 'visible',
 },
 
 heroFadeBottom: {
@@ -879,7 +880,7 @@ heroRow: {
   bottom: '48px',
   left: '56px',
   right: '56px',
-  zIndex: 5,
+  zIndex: 50,
 },
 
 heroGrid: {
