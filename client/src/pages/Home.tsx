@@ -25,7 +25,7 @@ const [currentPage, setCurrentPage] = useState(1);
   const [selectedType, setSelectedType] = useState('All');
   const [sortBy, setSortBy] = useState('latest');
   
-
+  const isSearching = searchQuery.trim().length > 0;
   useEffect(() => {
     const loadContent = async () => {
       setLoading(true);
@@ -49,8 +49,11 @@ const [currentPage, setCurrentPage] = useState(1);
   const filteredContent = allContent
     .filter((item) => {
       const matchesSearch =
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchQuery.toLowerCase());
+  searchQuery.trim() === '' ||
+  item.title
+    .toLowerCase()
+    .split(' ')
+    .some(word => word.startsWith(searchQuery.toLowerCase()));
       const matchesCategory =
   !selectedCategory || selectedCategory === 'All'
     ? true
@@ -143,7 +146,12 @@ const [currentPage, setCurrentPage] = useState(1);
       value={searchQuery}
       onChange={(e) => setSearchQuery(e.target.value)}
     />
-    <button className="nav-admin">ADMIN</button>
+    <button
+  className="nav-admin"
+  onClick={() => setLocation('/admin')}
+>
+  ADMIN
+</button>
   </div>
 </header>
       
@@ -182,7 +190,7 @@ const [currentPage, setCurrentPage] = useState(1);
   <div style={styles.heroButtons}>
     <button
       style={styles.btnWatch}
-      onClick={() => handleCardClick(featuredContent._id)}
+      onClick={() => setActiveItem(featuredContent)}
     >
       {featuredContent.type === 'VIDEO' ? 'WATCH VIDEO' : 'READ BLOG'}
     </button>
@@ -230,56 +238,153 @@ const [currentPage, setCurrentPage] = useState(1);
 <div style={styles.heroFadeBottom} />
         </section>
       )}
-
-      <main style={styles.mainContent}>
-        {loading ? (
-          <div style={styles.loadingContainer}>
-            <div style={styles.spinner}></div>
-            <p>Loading secure content...</p>
-          </div>
-        ) : filteredContent.length === 0 ? (
-          <div style={styles.emptyState}>
-            <p>No content available for the selected filters.</p>
-          </div>
-        ) : (
-          <div className="vms-content-grid" style={styles.contentGrid}>
-            {filteredContent.slice(4).map((item) => (
-              <div
-  key={item._id}
-  className="netflix-card-container"
-  onClick={() => setActiveItem(item)}
+      {/* 🔍 SEARCH RESULTS */}
+{isSearching && !loading && filteredContent.length > 0 && (
+  <main
+  style={{
+    ...styles.mainContent,
+    margin: '0',          // 🔥 center hata
+    maxWidth: '100%',     // 🔥 full width
+    paddingTop: '104px',   // navbar gap
+  }}
 >
-  <div className="netflix-card">
-    {/* THUMBNAIL */}
-    <div className="video-thumbnail">
-      {item.thumbnailPath ? (
-        <img src={item.thumbnailPath} alt={item.title} />
-      ) : (
-        <div className="placeholder-thumb">
-          {item.type}
-        </div>
-      )}
+      <h2
+      style={{
+        fontSize: '18px',
+        fontWeight: 700,
+        marginBottom: '16px',
+        color: '#ffffff',
+        letterSpacing: '0.3px',
+        paddingLeft: '56px',
+      }}
+    >
+      Your results
+    </h2>
 
-      <div className="play-overlay">
-        <div className="play-icon">
-          {item.type === 'VIDEO' ? 'PLAY' : 'VIEW'}
-        </div>
-      </div>
+   <div
+  className="vms-content-grid"
+  style={{
+    display: 'grid',
+    gridTemplateColumns: 'repeat(4, 1fr)',
+    gap: '32px',
+    marginTop: '24px',
+    paddingLeft: '56px',
+    paddingRight: '56px',
+    justifyContent: 'start',
+    alignContent: 'start',
+  }}
+>
+      {filteredContent.map((item) => (
+        <div
+          key={item._id}
+          className="netflix-card-container"
+          onClick={() => setActiveItem(item)}
+        >
+          <div className="netflix-card">
+            <div className="video-thumbnail">
+              {item.thumbnailPath ? (
+                <img src={item.thumbnailPath} alt={item.title} />
+              ) : (
+                <div className="placeholder-thumb">{item.type}</div>
+              )}
 
-      <div className="card-badge">{item.type}</div>
-    </div>
+              <div className="play-overlay">
+                <div className="play-icon">
+                  {item.type === 'VIDEO' ? 'PLAY' : 'VIEW'}
+                </div>
+              </div>
 
-    {/* POPUP (CHILD OF SAME CARD) */}
-   <div className="card-info-popup">
-  <h3>{item.title}</h3>
-  <p>{item.description || 'No description available.'}</p>
-</div>
-  </div>
-</div>
-            ))}
+              <div className="card-badge">{item.type}</div>
+            </div>
+
+            <div className="card-info-popup">
+              <h3>{item.title}</h3>
+              <p>{item.description || 'No description available.'}</p>
+            </div>
           </div>
-        )}
-      </main>
+        </div>
+      ))}
+    </div>
+  </main>
+)}
+      <main style={styles.mainContent}>
+  {loading ? (
+    <div style={styles.loadingContainer}>
+      <div style={styles.spinner}></div>
+      <p>Loading secure content...</p>
+    </div>
+  ) : filteredContent.length === 0 ? (
+    <div style={styles.emptyState}>
+      <p>No content available for the selected filters.</p>
+    </div>
+  ) : null}
+</main>
+
+{/* ✅ UPLOADS — OUTSIDE MAIN */}
+{!isSearching && !loading && filteredContent.length > 0 && (
+  <section
+    style={{
+      marginTop: '-48px',   // 👈 reduces gap from hero
+paddingBottom: '80px', // 👈 pushes footer down
+      paddingLeft: '56px',
+      paddingRight: '56px',
+      width: '100%',
+    }}
+  >
+    <h2
+      style={{
+        fontSize: '18px',
+        fontWeight: 700,
+        marginBottom: '16px',
+        color: '#ffffff',
+        letterSpacing: '0.3px',
+      }}
+    >
+      Uploads
+    </h2>
+
+    <div
+      className="vms-content-grid"
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(4, 1fr)',
+        gap: '32px',
+        width: '100%',
+      }}
+    >
+      {(searchQuery ? filteredContent : filteredContent.slice(4)).map((item) => (
+        <div
+          key={item._id}
+          className="netflix-card-container"
+          onClick={() => setActiveItem(item)}
+        >
+          <div className="netflix-card">
+            <div className="video-thumbnail">
+              {item.thumbnailPath ? (
+                <img src={item.thumbnailPath} alt={item.title} />
+              ) : (
+                <div className="placeholder-thumb">{item.type}</div>
+              )}
+
+              <div className="play-overlay">
+                <div className="play-icon">
+                  {item.type === 'VIDEO' ? 'PLAY' : 'VIEW'}
+                </div>
+              </div>
+
+              <div className="card-badge">{item.type}</div>
+            </div>
+
+            <div className="card-info-popup">
+              <h3>{item.title}</h3>
+              <p>{item.description || 'No description available.'}</p>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+)}
       {activeItem && (
   <div className="netflix-modal-backdrop" onClick={() => setActiveItem(null)}>
     <div
@@ -876,7 +981,7 @@ heroFadeBottom: {
 
 heroRowWrapper: {
   position: 'absolute',
-  bottom: '48px',
+  bottom: '24px',
   left: '56px',
   right: '56px',
   zIndex: 50,
@@ -964,6 +1069,7 @@ heroGrid: {
     width: '100%',
     overflow: 'visible',
     justifyContent: 'start',
+    alignItems: 'start',
   },
   videoCard: {
     backgroundColor: '#181818',
