@@ -4,6 +4,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import Home from "./pages/Home";
 import Admin from "./pages/Admin";
 import Video from "./pages/Video";
+import Library from "./pages/Library";
 
 /**
  * National Media Portal - Main App
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/admin" component={Admin} />
       <Route path="/video/:id" component={Video} />
+      <Route path="/library" component={Library} />
       <Route path="/404" component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

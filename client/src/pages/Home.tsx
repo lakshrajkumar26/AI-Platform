@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { getVideos, type Video } from '@/services/api';
+import { useLibrary } from '@/hooks/useLibrary';
 
 const CATEGORIES = [
   'All',
@@ -24,6 +25,7 @@ const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState<'All' | string>('All');
   const [selectedType, setSelectedType] = useState('All');
   const [sortBy, setSortBy] = useState('latest');
+  const { saveToLibrary, isSaved } = useLibrary();
   
   const isSearching = searchQuery.trim().length > 0;
   useEffect(() => {
@@ -120,7 +122,12 @@ const [currentPage, setCurrentPage] = useState(1);
 >
   Oldest
 </span>
-    <span className="nav-link">My Library</span>
+    <span
+  className="nav-link"
+  onClick={() => setLocation('/library')}
+>
+  My Library
+</span>
 
 <select
   className="nav-dropdown"
@@ -194,6 +201,15 @@ const [currentPage, setCurrentPage] = useState(1);
     >
       {featuredContent.type === 'VIDEO' ? 'WATCH VIDEO' : 'READ BLOG'}
     </button>
+    <button
+      style={{
+        ...styles.btnSave,
+        background: isSaved(featuredContent._id) ? '#E50914' : 'rgba(255,255,255,0.2)',
+      }}
+      onClick={() => saveToLibrary(featuredContent)}
+    >
+      {isSaved(featuredContent._id) ? '❤ SAVED' : '🤍 SAVE'}
+    </button>
   </div>
 </div>
 
@@ -223,6 +239,16 @@ const [currentPage, setCurrentPage] = useState(1);
               </div>
             </div>
             <div className="card-badge">{item.type}</div>
+            <button
+              className="save-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                saveToLibrary(item);
+              }}
+              title={isSaved(item._id) ? 'Remove from library' : 'Add to library'}
+            >
+              {isSaved(item._id) ? '❤' : '🤍'}
+            </button>
           </div>
 
           <div className="card-info-popup">
@@ -295,6 +321,17 @@ const [currentPage, setCurrentPage] = useState(1);
               </div>
 
               <div className="card-badge">{item.type}</div>
+
+              <button
+                className="save-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  saveToLibrary(item);
+                }}
+                title={isSaved(item._id) ? 'Remove from library' : 'Add to library'}
+              >
+                {isSaved(item._id) ? '❤' : '🤍'}
+              </button>
             </div>
 
             <div className="card-info-popup">
@@ -373,6 +410,17 @@ paddingBottom: '80px', // 👈 pushes footer down
               </div>
 
               <div className="card-badge">{item.type}</div>
+
+              <button
+                className="save-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  saveToLibrary(item);
+                }}
+                title={isSaved(item._id) ? 'Remove from library' : 'Add to library'}
+              >
+                {isSaved(item._id) ? '❤' : '🤍'}
+              </button>
             </div>
 
             <div className="card-info-popup">
@@ -418,6 +466,15 @@ paddingBottom: '80px', // 👈 pushes footer down
             onClick={() => handleCardClick(activeItem._id)}
           >
             {activeItem.type === 'VIDEO' ? '▶ Play' : '📖 Read'}
+          </button>
+          <button
+            className="modal-save"
+            onClick={() => saveToLibrary(activeItem)}
+            style={{
+              background: isSaved(activeItem._id) ? '#E50914' : 'rgba(255,255,255,0.2)',
+            }}
+          >
+            {isSaved(activeItem._id) ? '❤ SAVED' : '🤍 SAVE'}
           </button>
         </div>
       </div>
@@ -497,8 +554,6 @@ const cssStyles = `
 
   line-height: 1;
   height: 16px;
-
-  display: inline-flex;
   align-items: center;
 }
 
@@ -538,6 +593,7 @@ const cssStyles = `
   padding: 8px 14px;
   font-weight: 700;
   border-radius: 4px;
+  cursor: pointer;
 }
   .netflix-card-container {
     position: relative;
@@ -626,6 +682,29 @@ const cssStyles = `
   border: 1px solid #c8a951;
   border-radius: 4px;
   z-index: 3;
+}
+
+.save-btn {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0,0,0,0.6);
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  transition: all 0.2s ease;
+}
+
+.save-btn:hover {
+  background: rgba(0,0,0,0.9);
+  transform: scale(1.1);
 }
 
 .placeholder-thumb {
@@ -772,6 +851,8 @@ const cssStyles = `
 
 .modal-actions {
   margin-top: 24px;
+  display: flex;
+  gap: 12px;
 }
 
 .modal-play {
@@ -783,6 +864,21 @@ const cssStyles = `
   font-weight: 800;
   border-radius: 4px;
   cursor: pointer;
+}
+
+.modal-save {
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  padding: 14px 28px;
+  font-size: 14px;
+  font-weight: 800;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modal-save:hover {
+  border-color: rgba(255,255,255,0.6);
 }
 
   .vms-content-grid {
@@ -919,303 +1015,153 @@ const styles: Record<string, React.CSSProperties> = {
     minWidth: '140px',
   },
   filterLabel: {
-    color: '#c8a951',
     fontSize: '11px',
-    fontWeight: '800',
-    letterSpacing: '0.8px',
+    fontWeight: '700',
+    color: '#c8a951',
+    letterSpacing: '0.5px',
+    textTransform: 'uppercase' as const,
   },
-  clearBtn: {
-    height: '36px',
-    border: '1px solid #c8a951',
-    backgroundColor: '#c8a951',
-    color: '#0b0d0c',
+  filterSelect: {
+    backgroundColor: '#1a1d1c',
+    border: '1px solid #3f3f3f',
+    color: '#fff',
+    padding: '8px 10px',
     borderRadius: '4px',
-    fontSize: '12px',
-    fontWeight: '800',
-    cursor: 'pointer',
+    fontSize: '13px',
+    fontWeight: '600',
+  },
+  mainContent: {
+    flex: 1,
+    backgroundColor: '#0b0d0c',
     width: '100%',
   },
-  selectInput: {
-    backgroundColor: '#0b0d0c',
-    color: '#c8a951',
-    border: '1px solid #3b3b3b',
-    borderRadius: '4px',
-    padding: '8px 10px',
-    fontSize: '12px',
-    fontWeight: '700',
-    outline: 'none',
-    height: '36px',
-  },
-  dateInput: {
-    backgroundColor: '#0b0d0c',
-    color: '#c8a951',
-    border: '1px solid #3b3b3b',
-    borderRadius: '4px',
-    padding: '8px 10px',
-    fontSize: '12px',
-    height: '36px',
-  },
   heroSection: {
-  position: 'relative',
-  height: '92vh',
-  minHeight: '820px',
-  width: '100%',
-  backgroundSize: 'cover',
-  backgroundPosition: 'center',
-  paddingLeft: '56px',
-  paddingRight: '56px',
-  paddingTop: '120px',
-  overflow: 'visible',
-},
-
-heroFadeBottom: {
-  position: 'absolute',
-  bottom: '-1px',
-  left: 0,
-  right: 0,
-  height: '160px',
-  background: 'linear-gradient(to bottom, rgba(11,13,12,0), #0b0d0c 80%)',
-  zIndex: 2,
-  pointerEvents: 'none',
-},
-
-heroRowWrapper: {
-  position: 'absolute',
-  bottom: '24px',
-  left: '56px',
-  right: '56px',
-  zIndex: 50,
-},
-
-heroRowLabel: {
-  fontSize: '18px',
-  fontWeight: '800',
-  color: '#e5e5e5',
-  marginBottom: '12px',
-  letterSpacing: '0.4px',
-},
-netflixRowTitle: {
-  fontSize: '18px',
-  fontWeight: '700',
-  color: '#ffffff',
-  letterSpacing: '0.3px',
-
-  marginBottom: '8px',          // 👈 small logical spacing
-  transform: 'translateY(-6px)', // 👈 visual air (Netflix trick)
-
-  textShadow: '0 1px 10px rgba(0,0,0,0.85)',
-},
-heroGrid: {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(4, 1fr)',
-  gap: '32px',
-  width: '100%',
-},
-
+    height: '720px',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    justifyContent: 'flex-end',
+    paddingBottom: '120px',
+    paddingLeft: '56px',
+    paddingRight: '56px',
+    position: 'relative' as const,
+    marginTop: '64px',
+  },
   heroContent: {
-  maxWidth: '680px',
-  zIndex: 2,
-},
+    maxWidth: '550px',
+  },
   heroCategory: {
+    fontSize: '13px',
+    fontWeight: '700',
     color: '#c8a951',
-    fontSize: '14px',
-    fontWeight: '800',
-    letterSpacing: '2px',
+    letterSpacing: '1px',
+    textTransform: 'uppercase' as const,
     marginBottom: '12px',
   },
   heroTitle: {
-    fontSize: '56px',
+    fontSize: '48px',
     fontWeight: '900',
+    margin: '0 0 16px 0',
     lineHeight: '1.1',
-    marginBottom: '20px',
-    textTransform: 'none',
     color: '#fff',
-    textShadow: '0 4px 18px rgba(0,0,0,0.5)',
   },
   heroDescription: {
-    fontSize: '18px',
-    color: '#ddd',
-    marginBottom: '32px',
+    fontSize: '16px',
     lineHeight: '1.6',
-    maxWidth: '760px',
+    color: '#d0d0d0',
+    marginBottom: '24px',
   },
   heroButtons: {
     display: 'flex',
-    gap: '16px',
+    gap: '12px',
+    alignItems: 'center',
   },
   btnWatch: {
     backgroundColor: '#E50914',
     color: '#fff',
     border: 'none',
-    padding: '14px 28px',
+    padding: '12px 28px',
     fontSize: '14px',
-    fontWeight: '900',
-    cursor: 'pointer',
-    letterSpacing: '1px',
+    fontWeight: '800',
     borderRadius: '4px',
+    cursor: 'pointer',
+    letterSpacing: '0.5px',
   },
- mainContent: {
-  maxWidth: '1400px',
-  margin: '0 auto',
-  padding: '48px 56px',
-  flex: 1,
-  width: '100%',
-  backgroundColor: '#0b0d0c',
-},
-  contentGrid: {
+  btnSave: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    color: '#fff',
+    border: '1px solid rgba(255,255,255,0.3)',
+    padding: '12px 28px',
+    fontSize: '14px',
+    fontWeight: '800',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    letterSpacing: '0.5px',
+    transition: 'all 0.2s ease',
+  },
+  heroRowWrapper: {
+    marginTop: '48px',
+  },
+  netflixRowTitle: {
+    fontSize: '18px',
+    fontWeight: '700',
+    marginBottom: '16px',
+    color: '#ffffff',
+    letterSpacing: '0.3px',
+  },
+  heroGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(4, 1fr)',
     gap: '32px',
-    width: '100%',
-    overflow: 'visible',
-    justifyContent: 'start',
-    alignItems: 'start',
   },
-  videoCard: {
-    backgroundColor: '#181818',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    position: 'relative',
-    height: 'fit-content',
-  },
-  videoThumbnail: {
-    position: 'relative',
-    zIndex: 2,
-    aspectRatio: '16 / 9',
-    backgroundColor: '#181818',
-    borderRadius: '6px',
-    overflow: 'hidden',
-    transition: 'all 0.3s ease',
-  },
-  thumbnailImg: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover' as const,
-  },
-  placeholderThumb: {
-    width: '100%',
-    height: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '16px',
-    fontWeight: '800',
-    color: '#c8a951',
-  },
-  playOverlay: {
+  heroFadeBottom: {
     position: 'absolute' as const,
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    opacity: 0,
-    transition: 'opacity 0.3s',
-  },
-  playIcon: {
-    fontSize: '12px',
-    padding: '10px 16px',
-    backgroundColor: '#E50914',
-    color: '#fff',
-    fontWeight: '900',
-    borderRadius: '4px',
-    letterSpacing: '1px',
-  },
-  cardBadge: {
-    position: 'absolute' as const,
-    top: '10px',
-    right: '10px',
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    color: '#c8a951',
-    padding: '4px 8px',
-    fontSize: '10px',
-    fontWeight: '800',
-    border: '1px solid #c8a951',
-    borderRadius: '4px',
-    zIndex: 3,
-  },
-  cardInfo: {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    zIndex: 10,
-    padding: '16px',
-    backgroundColor: '#181818',
-    borderBottomLeftRadius: '6px',
-    borderBottomRightRadius: '6px',
-    boxShadow: '0 10px 20px rgba(0,0,0,0.5)',
-    opacity: 0,
-    visibility: 'hidden',
-    transition: 'all 0.3s ease',
-    transform: 'translateY(-10px)',
-  },
-  cardTitle: {
-    fontSize: '16px',
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: '8px',
-  },
-  cardDescription: {
-    fontSize: '13px',
-    lineHeight: '1.4',
-    color: '#d1d1d1',
-    marginBottom: '16px',
-    display: '-webkit-box',
-    WebkitLineClamp: 3,
-    WebkitBoxOrient: 'vertical',
-    overflow: 'hidden',
-  },
-  cardAction: {
-    backgroundColor: '#E50914',
-    color: '#fff',
-    border: 'none',
-    padding: '10px 16px',
-    fontSize: '12px',
-    fontWeight: '800',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    width: '100%',
-    transition: 'background-color 0.2s',
+    bottom: '0',
+    left: '0',
+    right: '0',
+    height: '120px',
+    background: 'linear-gradient(to bottom, transparent, #0b0d0c)',
+    pointerEvents: 'none' as const,
   },
   loadingContainer: {
     display: 'flex',
     flexDirection: 'column' as const,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '100px 0',
-    color: '#c8a951',
+    height: '60vh',
+    gap: '16px',
   },
   spinner: {
-    width: '40px',
-    height: '40px',
+    width: '46px',
+    height: '46px',
     border: '3px solid #c8a951',
     borderTop: '3px solid transparent',
     borderRadius: '50%',
     animation: 'spin 1s linear infinite',
-    marginBottom: '20px',
   },
   emptyState: {
-    textAlign: 'center' as const,
-    padding: '100px 0',
-    color: '#888',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '60vh',
+    color: '#aaa',
+    fontSize: '16px',
   },
   footer: {
     backgroundColor: '#0b0d0c',
-    borderTop: '1px solid #333',
-    padding: '40px 24px',
+    borderTop: '1px solid #2f2f2f',
+    padding: '24px',
     textAlign: 'center' as const,
+    marginTop: 'auto',
   },
   footerContent: {
-    maxWidth: '800px',
+    maxWidth: '1400px',
     margin: '0 auto',
   },
   footerMeta: {
     fontSize: '12px',
-    color: '#555',
-    marginTop: '12px',
+    color: '#666',
+    margin: '8px 0 0 0',
   },
 };
