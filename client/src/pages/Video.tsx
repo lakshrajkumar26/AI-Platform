@@ -1,6 +1,7 @@
 ﻿import { useEffect, useRef, useState } from 'react';
 import { useRoute, useLocation } from 'wouter';
 import { getSingleVideo } from '@/services/api';
+import { useLibrary } from '@/hooks/useLibrary';
 
 export default function Video() {
   const [, params] = useRoute('/video/:id');
@@ -9,6 +10,7 @@ export default function Video() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const playerShellRef = useRef<HTMLDivElement | null>(null);
+  const { saveToLibrary, isSaved } = useLibrary();
 
   useEffect(() => {
     if (params?.id) {
@@ -42,6 +44,12 @@ export default function Video() {
       return;
     }
     await playerShellRef.current.requestFullscreen();
+  };
+
+  const handleSaveToLibrary = () => {
+    if (video) {
+      saveToLibrary(video);
+    }
   };
 
   if (loading) {
@@ -78,13 +86,23 @@ export default function Video() {
           Back
         </button>
         <h1 style={styles.title}>{video.title}</h1>
-        {!isBlog ? (
-          <button onClick={handleFullscreen} style={styles.actionBtn}>
-            Full Screen
+        <div style={styles.rightButtons}>
+          <button
+            onClick={handleSaveToLibrary}
+            style={{
+              ...styles.actionBtn,
+              background: isSaved(video._id) ? '#E50914' : 'rgba(255,255,255,0.2)',
+            }}
+            title={isSaved(video._id) ? 'Remove from library' : 'Add to library'}
+          >
+            {isSaved(video._id) ? '❤ SAVED' : '🤍 SAVE'}
           </button>
-        ) : (
-          <div />
-        )}
+          {!isBlog && (
+            <button onClick={handleFullscreen} style={styles.actionBtn}>
+              Full Screen
+            </button>
+          )}
+        </div>
       </header>
 
       {isBlog ? (
@@ -189,6 +207,11 @@ const styles = {
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap' as const,
     textAlign: 'center' as const,
+  },
+  rightButtons: {
+    display: 'flex',
+    gap: '8px',
+    alignItems: 'center',
   },
   actionBtn: {
     padding: '8px 12px',

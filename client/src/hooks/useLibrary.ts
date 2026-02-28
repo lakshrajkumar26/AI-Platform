@@ -11,14 +11,27 @@ export const useLibrary = () => {
 
   // Load saved items from localStorage on mount
   useEffect(() => {
-    const loadSavedItems = () => {
+    const loadSavedItems = async () => {
       try {
         const stored = localStorage.getItem('vms_library');
         if (stored) {
-          setSavedItems(JSON.parse(stored));
+          const parsed = JSON.parse(stored);
+          // Validate that parsed data is an array
+          if (Array.isArray(parsed)) {
+            setSavedItems(parsed);
+          } else {
+            console.warn('Invalid library data format, resetting library');
+            localStorage.removeItem('vms_library');
+            setSavedItems([]);
+          }
+        } else {
+          setSavedItems([]);
         }
       } catch (error) {
         console.error('Error loading library:', error);
+        // Clear corrupted data
+        localStorage.removeItem('vms_library');
+        setSavedItems([]);
       } finally {
         setIsLoading(false);
       }
@@ -60,11 +73,20 @@ export const useLibrary = () => {
   // Persist to localStorage whenever savedItems changes
   useEffect(() => {
     try {
-      localStorage.setItem('vms_library', JSON.stringify(savedItems));
+      // Only persist if not loading (initial load)
+      if (!isLoading) {
+        localStorage.setItem('vms_library', JSON.stringify(savedItems));
+      }
     } catch (error) {
-      console.error('Error saving library:', error);
+      if (error instanceof Error) {
+        if (error.name === 'QuotaExceededError') {
+          console.error('localStorage quota exceeded:', error);
+        } else {
+          console.error('Error saving library:', error);
+        }
+      }
     }
-  }, [savedItems]);
+  }, [savedItems, isLoading]);
 
   return {
     savedItems,

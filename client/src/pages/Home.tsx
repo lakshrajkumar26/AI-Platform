@@ -240,15 +240,14 @@ const [currentPage, setCurrentPage] = useState(1);
             </div>
             <div className="card-badge">{item.type}</div>
             <button
-              className="save-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                saveToLibrary(item);
-              }}
-              title={isSaved(item._id) ? 'Remove from library' : 'Add to library'}
-            >
-              {isSaved(item._id) ? '❤' : '🤍'}
-            </button>
+  className={`save-btn ${isSaved(item._id) ? 'saved' : ''}`}
+  onClick={(e) => {
+    e.stopPropagation();
+    saveToLibrary(item);
+  }}
+>
+  {isSaved(item._id) ? '❤' : '🤍'}
+</button>
           </div>
 
           <div className="card-info-popup">
@@ -323,15 +322,14 @@ const [currentPage, setCurrentPage] = useState(1);
               <div className="card-badge">{item.type}</div>
 
               <button
-                className="save-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  saveToLibrary(item);
-                }}
-                title={isSaved(item._id) ? 'Remove from library' : 'Add to library'}
-              >
-                {isSaved(item._id) ? '❤' : '🤍'}
-              </button>
+  className={`save-btn ${isSaved(item._id) ? 'saved' : ''}`}
+  onClick={(e) => {
+    e.stopPropagation();
+    saveToLibrary(item);
+  }}
+>
+  {isSaved(item._id) ? '❤' : '🤍'}
+</button>
             </div>
 
             <div className="card-info-popup">
@@ -412,15 +410,14 @@ paddingBottom: '80px', // 👈 pushes footer down
               <div className="card-badge">{item.type}</div>
 
               <button
-                className="save-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  saveToLibrary(item);
-                }}
-                title={isSaved(item._id) ? 'Remove from library' : 'Add to library'}
-              >
-                {isSaved(item._id) ? '❤' : '🤍'}
-              </button>
+  className={`save-btn ${isSaved(item._id) ? 'saved' : ''}`}
+  onClick={(e) => {
+    e.stopPropagation();
+    saveToLibrary(item);
+  }}
+>
+  {isSaved(item._id) ? '❤' : '🤍'}
+</button>
             </div>
 
             <div className="card-info-popup">
@@ -701,7 +698,14 @@ const cssStyles = `
   z-index: 3;
   transition: all 0.2s ease;
 }
+.save-btn.saved {
+  background: #E50914;
+  color: #ffffff;
+}
 
+.save-btn.saved:hover {
+  background: #ff1f1f;
+}
 .save-btn:hover {
   background: rgba(0,0,0,0.9);
   transform: scale(1.1);
