@@ -26,6 +26,7 @@ const [currentPage, setCurrentPage] = useState(1);
   const [selectedType, setSelectedType] = useState('All');
   const [sortBy, setSortBy] = useState('latest');
   const [continueItems, setContinueItems] = useState<any[]>([]);
+  const [readBlogs, setReadBlogs] = useState<Set<string>>(new Set());
   const { saveToLibrary, isSaved } = useLibrary();
   
   const isSearching = searchQuery.trim().length > 0;
@@ -39,6 +40,10 @@ const [currentPage, setCurrentPage] = useState(1);
         ]);
         setAllContent(videosData);
         setContinueItems(progressData);
+        
+        // Load read blogs from localStorage
+        const savedReadBlogs = JSON.parse(localStorage.getItem('vms_read_blogs') || '[]');
+        setReadBlogs(new Set(savedReadBlogs));
       } catch (error) {
         console.error('Failed to fetch content:', error);
       } finally {
@@ -51,6 +56,13 @@ const [currentPage, setCurrentPage] = useState(1);
 
   const handleCardClick = (contentId: string) => {
     setLocation(`/video/${contentId}`);
+  };
+
+  const handleMarkAsRead = (blogId: string) => {
+    const newReadBlogs = new Set(readBlogs);
+    newReadBlogs.add(blogId);
+    setReadBlogs(newReadBlogs);
+    localStorage.setItem('vms_read_blogs', JSON.stringify(Array.from(newReadBlogs)));
   };
 
   const filteredContent = allContent
@@ -362,7 +374,7 @@ const [currentPage, setCurrentPage] = useState(1);
   ) : null}
 </main>
 {/* 🍿 CONTINUE WATCHING SECTION */}
-{continueItems.filter(i => i.content.type === 'VIDEO').length > 0 && (
+{continueItems.filter(i => i.content?.type === 'VIDEO').length > 0 && (
   <div
   style={{
     ...styles.heroRowWrapper,
@@ -373,7 +385,7 @@ const [currentPage, setCurrentPage] = useState(1);
 >
     <div style={styles.netflixRowTitle}>Continue Watching</div>
     <div style={styles.heroGrid}>
-      {continueItems.filter(i => i.content.type === 'VIDEO').slice(0, 4).map((item) => (
+      {continueItems.filter(i => i.content?.type === 'VIDEO').slice(0, 4).map((item) => (
         <div
           key={item.contentId}
           className="netflix-card-container"
@@ -381,9 +393,9 @@ const [currentPage, setCurrentPage] = useState(1);
         >
           <div className="netflix-card">
             <div className="video-thumbnail">
-              {item.content.thumbnailPath ? (
+              {item.content?.thumbnailPath ? (
                 <img
-  src={item.content.thumbnailPath ? item.content.thumbnailPath : '/placeholder.jpg'}
+  src={item.content.thumbnailPath}
   alt={item.content.title}
 />
               ) : (
@@ -410,7 +422,7 @@ const [currentPage, setCurrentPage] = useState(1);
               </div>
             </div>
             <div className="card-info-popup">
-              <h3>{item.content.title}</h3>
+              <h3>{item.content?.title}</h3>
               <p>{item.progress}% watched</p>
             </div>
           </div>
@@ -421,7 +433,7 @@ const [currentPage, setCurrentPage] = useState(1);
 )}
 
 {/* 📖 CONTINUE READING SECTION */}
-{continueItems.filter(i => i.content.type === 'BLOG').length > 0 && (
+{continueItems.filter(i => i.content?.type === 'BLOG').length > 0 && (
   <div
   style={{
     ...styles.heroRowWrapper,
@@ -432,7 +444,7 @@ const [currentPage, setCurrentPage] = useState(1);
 >
     <div style={styles.netflixRowTitle}>Continue Reading</div>
     <div style={styles.heroGrid}>
-      {continueItems.filter(i => i.content.type === 'BLOG').slice(0, 4).map((item) => (
+      {continueItems.filter(i => i.content?.type === 'BLOG').slice(0, 4).map((item) => (
         <div
           key={item.contentId}
           className="netflix-card-container"
@@ -440,8 +452,8 @@ const [currentPage, setCurrentPage] = useState(1);
         >
           <div className="netflix-card">
             <div className="video-thumbnail">
-              {item.content.thumbnailPath ? (
-                <img src={item.content.thumbnailPath} alt={item.content.title} />
+              {item.content?.thumbnailPath ? (
+                <img src={item.content.thumbnailPath} alt={item.content?.title} />
               ) : (
                 <div className="placeholder-thumb">BLOG</div>
               )}
@@ -466,7 +478,7 @@ const [currentPage, setCurrentPage] = useState(1);
               </div>
             </div>
             <div className="card-info-popup">
-              <h3>{item.content.title}</h3>
+              <h3>{item.content?.title}</h3>
               <p>{item.progress}% read</p>
             </div>
           </div>
@@ -584,6 +596,17 @@ paddingBottom: '80px', // 👈 pushes footer down
           >
             {activeItem.type === 'VIDEO' ? '▶ Play' : '📖 Read'}
           </button>
+          {activeItem.type === 'BLOG' && (
+            <button
+              className="modal-save"
+              onClick={() => handleMarkAsRead(activeItem._id)}
+              style={{
+                background: readBlogs.has(activeItem._id) ? '#c8a951' : 'rgba(255,255,255,0.2)',
+              }}
+            >
+              {readBlogs.has(activeItem._id) ? '✓ MARKED AS READ' : '📖 MARK AS READ'}
+            </button>
+          )}
           <button
             className="modal-save"
             onClick={() => saveToLibrary(activeItem)}
@@ -868,91 +891,77 @@ const cssStyles = `
 .netflix-card-container:hover .card-info-popup {
   opacity: 1;
   transform: translateY(0);
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .card-info-popup h3 {
-  font-size: 16px;
-  font-weight: 700;
+  margin: 0 0 8px 0;
+  font-size: 14px;
   color: #fff;
-  margin-bottom: 8px;
+  font-weight: 700;
 }
 
 .card-info-popup p {
-  font-size: 13px;
-  line-height: 1.4;
-  color: #d1d1d1;
-  margin-bottom: 12px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.card-info-popup button {
-  background: #E50914;
-  color: #fff;
-  border: none;
-  padding: 8px 12px;
+  margin: 0;
   font-size: 12px;
-  font-weight: 800;
-  border-radius: 4px;
-  cursor: pointer;
-  width: 100%;
+  color: #aaa;
+  line-height: 1.4;
 }
 
-  .netflix-modal-backdrop {
+/* MODAL */
+.netflix-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.75);
-  z-index: 1000;
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(4px);
 }
 
 .netflix-modal {
-  width: 900px;
-  max-width: 95%;
-  background: #141414;
-  border-radius: 10px;
+  background: #181818;
+  border-radius: 12px;
   overflow: hidden;
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
   position: relative;
-  animation: modalIn 0.3s ease;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.9);
 }
 
-@keyframes modalIn {
-  from {
-    transform: translateY(40px) scale(0.95);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-}
-.netflix-card-container {
-  position: relative;
-  z-index: 10;
-}
 .modal-close {
   position: absolute;
   top: 16px;
   right: 16px;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0,0,0,0.6);
   border: none;
   color: #fff;
-  font-size: 18px;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   cursor: pointer;
+  font-size: 18px;
   z-index: 10;
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  background: rgba(0,0,0,0.9);
+  transform: scale(1.1);
+}
+
+.modal-hero {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
 }
 
 .modal-hero img {
   width: 100%;
-  height: 420px;
+  height: 100%;
   object-fit: cover;
 }
 
@@ -961,203 +970,84 @@ const cssStyles = `
 }
 
 .modal-content h1 {
-  font-size: 32px;
-  margin-bottom: 12px;
+  margin: 0 0 12px 0;
+  font-size: 28px;
+  color: #fff;
+  line-height: 1.2;
 }
 
 .modal-meta {
   display: flex;
-  gap: 16px;
-  color: #aaa;
-  font-size: 14px;
+  gap: 12px;
   margin-bottom: 16px;
 }
 
+.modal-meta span {
+  font-size: 12px;
+  color: #c8a951;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.modal-content p {
+  margin: 0 0 20px 0;
+  color: #d0d0d0;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
 .modal-actions {
-  margin-top: 24px;
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .modal-play {
   background: #E50914;
   color: #fff;
   border: none;
-  padding: 14px 28px;
-  font-size: 14px;
+  padding: 12px 24px;
   font-weight: 800;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  letter-spacing: 0.5px;
+}
+
+.modal-play:hover {
+  background: #ff1f1f;
+  transform: scale(1.05);
 }
 
 .modal-save {
-  border: 1px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.2);
   color: #fff;
-  padding: 14px 28px;
-  font-size: 14px;
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 12px 24px;
   font-weight: 800;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
+  font-size: 14px;
   transition: all 0.2s ease;
+  letter-spacing: 0.5px;
 }
 
 .modal-save:hover {
-  border-color: rgba(255,255,255,0.6);
-}
-
-  .vms-content-grid {
-  position: relative;
-  z-index: 10;
+  background: rgba(255,255,255,0.3);
+  transform: scale(1.05);
 }
 `;
 
-const styles: Record<string, React.CSSProperties> = {
+const styles = {
   container: {
-    backgroundColor: '#0b0d0c',
-    color: '#e8e8e8',
-    fontFamily: 'sans-serif',
+    width: '100%',
     minHeight: '100vh',
-    display: 'flex',
-    flexDirection: 'column' as const,
-  },
-  commandBar: {
-    backgroundColor: '#151817',
-    borderBottom: '2px solid #c8a951',
-    padding: '0',
-    height: '68px',
-    display: 'flex',
-    alignItems: 'center',
-    zIndex: 100,
-  },
-  commandBarContent: {
-    maxWidth: '1400px',
-    margin: '0 auto',
-    width: '100%',
-    padding: '0 56px',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: '24px',
-  },
-  
-  logo: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-  },
-  logoIcon: {
-    fontSize: '13px',
-    fontWeight: '900',
-    letterSpacing: '1px',
-    color: '#0b0d0c',
-    backgroundColor: '#c8a951',
-    padding: '9px 10px',
-    borderRadius: '4px',
-  },
-  logoTitle: {
-    fontSize: '24px',
-    fontWeight: '900',
-    color: '#c8a951',
-    lineHeight: '1',
-    letterSpacing: '1px',
-  },
-  logoSubtitle: {
-    fontSize: '10px',
-    color: '#888',
-    textTransform: 'uppercase' as const,
-    letterSpacing: '2px',
-    marginTop: '2px',
-  },
-  searchContainer: {
-    flex: 1,
-    maxWidth: '680px',
-  },
-  searchShell: {
-    position: 'relative' as const,
-    border: '1px solid #3f3f3f',
-    borderRadius: '8px',
-    background: 'linear-gradient(180deg, #141716 0%, #0f1211 100%)',
-    boxShadow: 'inset 0 0 0 1px rgba(200,169,81,0.08)',
-    overflow: 'hidden',
-  },
-  searchIcon: {
-    position: 'absolute' as const,
-    left: '12px',
-    top: '50%',
-    transform: 'translateY(-50%)',
-    color: '#c8a951',
-    fontSize: '10px',
-    fontWeight: '800',
-    letterSpacing: '0.8px',
-  },
-  searchInput: {
-    width: '100%',
-    backgroundColor: 'transparent',
-    border: 'none',
-    color: '#fff',
-    padding: '12px 14px 12px 78px',
-    fontSize: '14px',
-    outline: 'none',
-  },
-  headerRight: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '20px',
-  },
-  adminLink: {
-    color: '#0b0d0c',
-    textDecoration: 'none',
-    fontSize: '12px',
-    fontWeight: '800',
-    letterSpacing: '1px',
-    border: '1px solid #c8a951',
-    backgroundColor: '#c8a951',
-    padding: '10px 14px',
-    borderRadius: '6px',
-    textTransform: 'uppercase' as const,
-  },
-  filterBar: {
-    backgroundColor: '#1a1d1c',
-    padding: '14px 24px',
-    borderBottom: '1px solid #333',
-  },
-  filterControls: {
-    maxWidth: '1400px',
-    margin: '0 auto',
-    width: '100%',
-    display: 'flex',
-    flexWrap: 'nowrap' as const,
-    gap: '10px',
-    alignItems: 'end',
-    overflowX: 'auto' as const,
-  },
-  filterField: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '6px',
-    flex: 1,
-    minWidth: '140px',
-  },
-  filterLabel: {
-    fontSize: '11px',
-    fontWeight: '700',
-    color: '#c8a951',
-    letterSpacing: '0.5px',
-    textTransform: 'uppercase' as const,
-  },
-  filterSelect: {
-    backgroundColor: '#1a1d1c',
-    border: '1px solid #3f3f3f',
-    color: '#fff',
-    padding: '8px 10px',
-    borderRadius: '4px',
-    fontSize: '13px',
-    fontWeight: '600',
-  },
-  mainContent: {
-    flex: 1,
     backgroundColor: '#0b0d0c',
-    width: '100%',
+    color: '#fff',
+    display: 'flex',
+    flexDirection: 'column' as const,
   },
   heroSection: {
     height: '720px',
@@ -1287,5 +1177,48 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '12px',
     color: '#666',
     margin: '8px 0 0 0',
+  },
+  mainContent: {
+    flex: 1,
+    backgroundColor: '#0b0d0c',
+    width: '100%',
+  },
+  filterBar: {
+    backgroundColor: '#1a1d1c',
+    padding: '14px 24px',
+    borderBottom: '1px solid #333',
+  },
+  filterControls: {
+    maxWidth: '1400px',
+    margin: '0 auto',
+    width: '100%',
+    display: 'flex',
+    flexWrap: 'nowrap' as const,
+    gap: '10px',
+    alignItems: 'end',
+    overflowX: 'auto' as const,
+  },
+  filterField: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '6px',
+    flex: 1,
+    minWidth: '140px',
+  },
+  filterLabel: {
+    fontSize: '11px',
+    fontWeight: '700',
+    color: '#c8a951',
+    letterSpacing: '0.5px',
+    textTransform: 'uppercase' as const,
+  },
+  filterSelect: {
+    backgroundColor: '#1a1d1c',
+    border: '1px solid #3f3f3f',
+    color: '#fff',
+    padding: '8px 10px',
+    borderRadius: '4px',
+    fontSize: '13px',
+    fontWeight: '600',
   },
 };

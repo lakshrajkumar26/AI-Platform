@@ -163,10 +163,10 @@ const getUserId = (): string => {
   return userId;
 };
 
-// Track user action (view, save, complete)
+// Track user action (view, save, complete, progress, like, mark_as_read)
 export const trackAction = async (
   contentId: string,
-  action: 'VIEW' | 'SAVE' | 'COMPLETE' | 'PROGRESS' | 'LIKE',
+  action: 'VIEW' | 'SAVE' | 'COMPLETE' | 'PROGRESS' | 'LIKE' | 'MARK_AS_READ',
   metadata?: Record<string, any>
 ): Promise<boolean> => {
   try {

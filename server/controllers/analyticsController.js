@@ -10,7 +10,7 @@ exports.trackAction = async (req, res) => {
       return res.status(400).json({ error: "Missing required fields: contentId, action, userId" });
     }
 
-    if (!["VIEW", "SAVE", "COMPLETE", "PROGRESS", "LIKE"].includes(action)) {
+    if (!["VIEW", "SAVE", "COMPLETE", "PROGRESS", "LIKE", "MARK_AS_READ"].includes(action)) {
       return res.status(400).json({ error: "Invalid action type" });
     }
 
@@ -49,6 +49,12 @@ exports.trackAction = async (req, res) => {
       const existingComplete = await UserActivity.findOne({ userId, contentId, action: "COMPLETE" });
       if (!existingComplete) {
         video.completions = (video.completions || 0) + 1;
+      }
+    } else if (action === "MARK_AS_READ") {
+      // Check if this user already marked this blog as read to avoid double counting
+      const existingRead = await UserActivity.findOne({ userId, contentId, action: "MARK_AS_READ" });
+      if (!existingRead) {
+        video.reads = (video.reads || 0) + 1;
       }
     }
 
@@ -99,6 +105,7 @@ exports.getStats = async (req, res) => {
     const totalSaves = await UserActivity.countDocuments({ action: "SAVE" });
     const totalLikes = await UserActivity.countDocuments({ action: "LIKE" });
     const totalCompletions = await UserActivity.countDocuments({ action: "COMPLETE" });
+    const totalReads = await UserActivity.countDocuments({ action: "MARK_AS_READ" });
 
     // Completion rate (videos completed / videos viewed)
     const completionRate = totalViews > 0 ? ((totalCompletions / totalViews) * 100).toFixed(2) : 0;
@@ -178,6 +185,7 @@ exports.getStats = async (req, res) => {
       totalSaves,
       totalLikes,
       totalCompletions,
+      totalReads,
       summary: {
         totalVideos,
         totalBlogs,
@@ -186,6 +194,7 @@ exports.getStats = async (req, res) => {
         totalSaves,
         totalLikes,
         totalCompletions,
+        totalReads,
         completionRate: parseFloat(completionRate),
       },
       topContent: {
@@ -245,7 +254,10 @@ exports.getUserProgress = async (req, res) => {
       title: "$content.title",
       type: "$content.type",
       category: "$content.category",
-      thumbnailPath: "$content.thumbnailPath"   // ⭐ IMPORTANT
+      thumbnailPath: "$content.thumbnailPath",
+      description: "$content.description",
+      videoPath: "$content.videoPath",
+      blogContent: "$content.blogContent"
     }
   }
 },
@@ -312,6 +324,7 @@ exports.getDashboardStats = async (req, res) => {
     // Total saves and likes
     const totalSaves = await UserActivity.countDocuments({ action: "SAVE" });
     const totalLikes = await UserActivity.countDocuments({ action: "LIKE" });
+    const totalReads = await UserActivity.countDocuments({ action: "MARK_AS_READ" });
 
     // Most liked content
     const mostLikedContent = await Video.findOne()
@@ -330,6 +343,7 @@ exports.getDashboardStats = async (req, res) => {
       totalSaves,
       totalLikes,
       totalCompletions,
+      totalReads,
     });
   } catch (err) {
     console.error("Get dashboard stats error:", err);
