@@ -15,7 +15,7 @@ const userActivitySchema = new mongoose.Schema({
 
   action: {
     type: String,
-    enum: ["VIEW", "SAVE", "COMPLETE"],
+    enum: ["VIEW", "SAVE", "COMPLETE", "PROGRESS", "LIKE"],
     required: true,
   },
 
@@ -27,6 +27,7 @@ const userActivitySchema = new mongoose.Schema({
   // Optional: store metadata about the action
   metadata: {
     duration: Number, // For video completion, how long they watched
+    progress: Number, // For PROGRESS action, percentage watched/read
     deviceType: String, // Desktop, Mobile, Tablet
   },
 });

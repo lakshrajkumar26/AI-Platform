@@ -7,6 +7,7 @@ interface DashboardStats {
   activeUsersToday: number;
   mostWatchedVideo: { title: string; views: number };
   mostSavedBlog: { title: string; saves: number };
+  mostLikedContent?: { title: string; likes: number; type: string };
   completionRate: number;
   totalViews: number;
   totalSaves: number;
@@ -149,6 +150,18 @@ export default function AnalyticsDashboard({ token }: AnalyticsDashboardProps) {
             </p>
           </div>
         </div>
+
+        {stats.mostLikedContent && (
+          <div style={styles.contentBox}>
+            <h3 style={styles.contentTitle}>👍 Most Liked {stats.mostLikedContent.type === 'VIDEO' ? 'Video' : 'Blog'}</h3>
+            <div style={styles.contentItem}>
+              <p style={styles.contentName}>{stats.mostLikedContent.title || "N/A"}</p>
+              <p style={styles.contentStat}>
+                👍 {stats.mostLikedContent.likes} likes
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Insights Section */}
@@ -273,7 +286,7 @@ const styles = {
 
   topContentSection: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
     gap: "20px",
     marginBottom: "30px",
   },

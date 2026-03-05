@@ -33,11 +33,23 @@ exports.trackAction = async (req, res) => {
     if (action === "VIEW") {
       video.views = (video.views || 0) + 1;
     } else if (action === "SAVE") {
-      video.saves = (video.saves || 0) + 1;
+      // Check if this user already saved this content to avoid double counting
+      const existingSave = await UserActivity.findOne({ userId, contentId, action: "SAVE" });
+      if (!existingSave) {
+        video.saves = (video.saves || 0) + 1;
+      }
     } else if (action === "LIKE") {
-      video.likes = (video.likes || 0) + 1;
+      // Check if this user already liked this content to avoid double counting
+      const existingLike = await UserActivity.findOne({ userId, contentId, action: "LIKE" });
+      if (!existingLike) {
+        video.likes = (video.likes || 0) + 1;
+      }
     } else if (action === "COMPLETE") {
-      video.completions = (video.completions || 0) + 1;
+      // Check if this user already completed this content to avoid double counting
+      const existingComplete = await UserActivity.findOne({ userId, contentId, action: "COMPLETE" });
+      if (!existingComplete) {
+        video.completions = (video.completions || 0) + 1;
+      }
     }
 
     await video.save();
@@ -101,6 +113,11 @@ exports.getStats = async (req, res) => {
       .sort({ saves: -1 })
       .select("title saves");
 
+    // Most liked content overall
+    const mostLikedContentOverall = await Video.findOne()
+      .sort({ likes: -1 })
+      .select("title likes type");
+
     // Activity trend (last 7 days)
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -155,6 +172,7 @@ exports.getStats = async (req, res) => {
       activeUsersToday: activeUsersToday.length,
       mostWatchedVideo: mostViewedVideoOverall || { title: "N/A", views: 0 },
       mostSavedBlog: mostSavedBlogOverall || { title: "N/A", saves: 0 },
+      mostLikedContent: mostLikedContentOverall || { title: "N/A", likes: 0, type: "VIDEO" },
       completionRate: parseFloat(completionRate),
       totalViews,
       totalSaves,
@@ -175,6 +193,7 @@ exports.getStats = async (req, res) => {
         mostSavedBlogs,
         mostViewedVideoOverall,
         mostSavedBlogOverall,
+        mostLikedContentOverall,
       },
       trends: {
         activityTrend,
@@ -216,14 +235,20 @@ exports.getUserProgress = async (req, res) => {
       },
       { $unwind: "$content" },
       {
-        $project: {
-          _id: 0,
-          contentId: "$_id",
-          progress: "$latestProgress.metadata.progress",
-          timestamp: "$latestProgress.timestamp",
-          content: 1,
-        },
-      },
+  $project: {
+    _id: 0,
+    contentId: "$_id",
+    progress: "$latestProgress.metadata.progress",
+    timestamp: "$latestProgress.timestamp",
+    content: {
+      _id: "$content._id",
+      title: "$content.title",
+      type: "$content.type",
+      category: "$content.category",
+      thumbnailPath: "$content.thumbnailPath"   // ⭐ IMPORTANT
+    }
+  }
+},
       { $sort: { timestamp: -1 } },
     ]);
 
@@ -288,12 +313,18 @@ exports.getDashboardStats = async (req, res) => {
     const totalSaves = await UserActivity.countDocuments({ action: "SAVE" });
     const totalLikes = await UserActivity.countDocuments({ action: "LIKE" });
 
+    // Most liked content
+    const mostLikedContent = await Video.findOne()
+      .sort({ likes: -1 })
+      .select("title likes type");
+
     res.json({
       totalVideos,
       totalBlogs,
       activeUsersToday: activeUsersToday.length,
       mostWatchedVideo: mostWatchedVideo || { title: "N/A", views: 0 },
       mostSavedBlog: mostSavedBlog || { title: "N/A", saves: 0 },
+      mostLikedContent: mostLikedContent || { title: "N/A", likes: 0, type: "VIDEO" },
       completionRate: parseFloat(completionRate),
       totalViews,
       totalSaves,

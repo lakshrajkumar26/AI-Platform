@@ -32,6 +32,8 @@ export default function Video() {
         .then((data) => {
           if (data) {
             setVideo(data);
+            // Track view
+            trackAction(data._id, 'VIEW');
           } else {
             setError('Video not found');
           }
