@@ -11,6 +11,9 @@ const auth = require("../middlewares/authMiddleware");
 // Track user action (view, save, complete)
 router.post("/track", analyticsController.trackAction);
 
+// Get user progress
+router.get("/progress", analyticsController.getUserProgress);
+
 // Get dashboard stats (public for now, can be restricted to admin later)
 router.get("/dashboard", analyticsController.getDashboardStats);
 

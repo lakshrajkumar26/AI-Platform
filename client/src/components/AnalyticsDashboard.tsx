@@ -10,6 +10,7 @@ interface DashboardStats {
   completionRate: number;
   totalViews: number;
   totalSaves: number;
+  totalLikes: number;
   totalCompletions: number;
 }
 
@@ -109,6 +110,11 @@ export default function AnalyticsDashboard({ token }: AnalyticsDashboardProps) {
         <div style={styles.card}>
           <div style={styles.cardLabel}>Total Views</div>
           <div style={styles.cardValue}>{stats.totalViews}</div>
+        </div>
+
+        <div style={styles.card}>
+          <div style={styles.cardLabel}>Total Likes</div>
+          <div style={styles.cardValue}>{stats.totalLikes || 0}</div>
         </div>
 
         <div style={styles.card}>

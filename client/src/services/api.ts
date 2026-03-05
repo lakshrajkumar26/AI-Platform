@@ -166,7 +166,7 @@ const getUserId = (): string => {
 // Track user action (view, save, complete)
 export const trackAction = async (
   contentId: string,
-  action: 'VIEW' | 'SAVE' | 'COMPLETE',
+  action: 'VIEW' | 'SAVE' | 'COMPLETE' | 'PROGRESS' | 'LIKE',
   metadata?: Record<string, any>
 ): Promise<boolean> => {
   try {
@@ -216,6 +216,27 @@ export const getAnalyticsStats = async (token: string): Promise<any> => {
   } catch (error) {
     console.error('Error fetching analytics stats:', error);
     throw error;
+  }
+};
+
+// Get user progress
+export const getUserProgress = async (): Promise<any[]> => {
+  try {
+    const userId = getUserId();
+    const response = await fetch(`${API_BASE_URL}/analytics/progress?userId=${userId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch progress: ${response.statusText}`);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching user progress:', error);
+    return [];
   }
 };
 

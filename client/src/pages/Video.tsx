@@ -1,8 +1,7 @@
 ﻿import { useEffect, useRef, useState } from 'react';
 import { useRoute, useLocation } from 'wouter';
-import { getSingleVideo } from '@/services/api';
+import { getSingleVideo, trackAction } from '@/services/api';
 import { useLibrary } from '@/hooks/useLibrary';
-import { trackAction } from '@/services/api';
 
 export default function Video() {
   const [, params] = useRoute('/video/:id');
@@ -11,7 +10,19 @@ export default function Video() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const playerShellRef = useRef<HTMLDivElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const blogRef = useRef<HTMLElement | null>(null);
+  const lastTrackedProgress = useRef<number>(0);
   const { saveToLibrary, isSaved } = useLibrary();
+  const [isLiked, setIsLiked] = useState(false);
+
+  // Check if liked from localStorage (simple implementation for now)
+  useEffect(() => {
+    if (video) {
+      const likedItems = JSON.parse(localStorage.getItem('vms_likes') || '[]');
+      setIsLiked(likedItems.includes(video._id));
+    }
+  }, [video]);
 
   useEffect(() => {
     if (params?.id) {
@@ -34,19 +45,54 @@ export default function Video() {
         });
     }
   }, [params?.id]);
-  <video
-  src={video.videoPath}
-  controls
-  controlsList="nodownload"
-  disablePictureInPicture
-  onContextMenu={(e) => e.preventDefault()}
-  onEnded={() => trackAction(video._id, 'COMPLETE')}
-  style={styles.videoEl}
-  autoPlay
-/>
+
+  const isBlog = video?.type === 'BLOG';
+
+  // Track video progress
+  useEffect(() => {
+    if (!video || isBlog || !videoRef.current) return;
+
+    const videoEl = videoRef.current;
+    const handleTimeUpdate = () => {
+      if (!videoEl.duration) return;
+      const progress = Math.floor((videoEl.currentTime / videoEl.duration) * 100);
+      // Track every 5% to avoid too many requests
+      if (progress > 0 && progress < 100 && progress >= lastTrackedProgress.current + 5) {
+        lastTrackedProgress.current = progress;
+        trackAction(video._id, 'PROGRESS', { progress });
+      }
+    };
+
+    videoEl.addEventListener('timeupdate', handleTimeUpdate);
+    return () => videoEl.removeEventListener('timeupdate', handleTimeUpdate);
+  }, [video, isBlog]);
+
+  // Track blog progress
+  useEffect(() => {
+    if (!video || !isBlog || !blogRef.current) return;
+
+    const blogEl = blogRef.current;
+    const handleScroll = () => {
+      const scrollPos = blogEl.scrollTop + blogEl.clientHeight;
+      const totalHeight = blogEl.scrollHeight;
+      const progress = Math.floor((scrollPos / totalHeight) * 100);
+
+      if (progress > 0 && progress < 100 && progress >= lastTrackedProgress.current + 10) {
+        lastTrackedProgress.current = progress;
+        trackAction(video._id, 'PROGRESS', { progress });
+      }
+
+      if (progress >= 95 && lastTrackedProgress.current < 95) {
+        lastTrackedProgress.current = 100;
+        trackAction(video._id, 'COMPLETE');
+      }
+    };
+
+    blogEl.addEventListener('scroll', handleScroll);
+    return () => blogEl.removeEventListener('scroll', handleScroll);
+  }, [video, isBlog]);
 
   const handleGoBack = () => setLocation('/');
-  const isBlog = video?.type === 'BLOG';
 
   const handleFullscreen = async () => {
     if (!playerShellRef.current) return;
@@ -60,6 +106,18 @@ export default function Video() {
   const handleSaveToLibrary = () => {
     if (video) {
       saveToLibrary(video);
+    }
+  };
+
+  const handleLike = () => {
+    if (video && !isLiked) {
+      setIsLiked(true);
+      const likedItems = JSON.parse(localStorage.getItem('vms_likes') || '[]');
+      if (!likedItems.includes(video._id)) {
+        likedItems.push(video._id);
+        localStorage.setItem('vms_likes', JSON.stringify(likedItems));
+        trackAction(video._id, 'LIKE');
+      }
     }
   };
 
@@ -99,6 +157,16 @@ export default function Video() {
         <h1 style={styles.title}>{video.title}</h1>
         <div style={styles.rightButtons}>
           <button
+            onClick={handleLike}
+            style={{
+              ...styles.actionBtn,
+              background: isLiked ? '#E50914' : 'rgba(255,255,255,0.2)',
+              marginRight: '8px'
+            }}
+          >
+            {isLiked ? '👍 LIKED' : '👍 LIKE'}
+          </button>
+          <button
             onClick={handleSaveToLibrary}
             style={{
               ...styles.actionBtn,
@@ -117,7 +185,7 @@ export default function Video() {
       </header>
 
       {isBlog ? (
-        <main style={styles.blogShell}>
+        <main ref={blogRef} style={styles.blogShell}>
           <article style={styles.blogCard}>
             <div style={styles.blogMeta}>
               {video.category} - {new Date(video.createdAt).toLocaleDateString()}
@@ -132,11 +200,16 @@ export default function Video() {
       ) : (
         <main ref={playerShellRef} style={styles.playerShell}>
           <video
+            ref={videoRef}
             src={video.videoPath}
             controls
             controlsList="nodownload"
             disablePictureInPicture
             onContextMenu={(e) => e.preventDefault()}
+            onEnded={() => {
+              lastTrackedProgress.current = 100;
+              trackAction(video._id, 'COMPLETE');
+            }}
             style={styles.videoEl}
             autoPlay
           />

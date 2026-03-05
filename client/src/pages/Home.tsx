@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { getVideos, type Video } from '@/services/api';
+import { getVideos, getUserProgress, type Video } from '@/services/api';
 import { useLibrary } from '@/hooks/useLibrary';
 
 const CATEGORIES = [
@@ -25,6 +25,7 @@ const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState<'All' | string>('All');
   const [selectedType, setSelectedType] = useState('All');
   const [sortBy, setSortBy] = useState('latest');
+  const [continueItems, setContinueItems] = useState<any[]>([]);
   const { saveToLibrary, isSaved } = useLibrary();
   
   const isSearching = searchQuery.trim().length > 0;
@@ -32,8 +33,12 @@ const [currentPage, setCurrentPage] = useState(1);
     const loadContent = async () => {
       setLoading(true);
       try {
-        const data = await getVideos();
-        setAllContent(data);
+        const [videosData, progressData] = await Promise.all([
+          getVideos(),
+          getUserProgress()
+        ]);
+        setAllContent(videosData);
+        setContinueItems(progressData);
       } catch (error) {
         console.error('Failed to fetch content:', error);
       } finally {
@@ -259,6 +264,104 @@ const [currentPage, setCurrentPage] = useState(1);
     ))}
   </div>
 </div>
+
+{/* 🍿 CONTINUE WATCHING SECTION */}
+{continueItems.filter(i => i.content.type === 'VIDEO').length > 0 && (
+  <div style={{ ...styles.heroRowWrapper, marginTop: '32px' }}>
+    <div style={styles.netflixRowTitle}>Continue Watching</div>
+    <div style={styles.heroGrid}>
+      {continueItems.filter(i => i.content.type === 'VIDEO').slice(0, 4).map((item) => (
+        <div
+          key={item.contentId}
+          className="netflix-card-container"
+          onClick={() => setActiveItem(item.content)}
+        >
+          <div className="netflix-card">
+            <div className="video-thumbnail">
+              {item.content.thumbnailPath ? (
+                <img src={item.content.thumbnailPath} alt={item.content.title} />
+              ) : (
+                <div className="placeholder-thumb">VIDEO</div>
+              )}
+              <div className="play-overlay">
+                <div className="play-icon">RESUME</div>
+              </div>
+              {/* Progress Bar */}
+              <div style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                width: '100%',
+                height: '4px',
+                backgroundColor: 'rgba(255,255,255,0.3)',
+                zIndex: 10
+              }}>
+                <div style={{
+                  width: `${item.progress}%`,
+                  height: '100%',
+                  backgroundColor: '#E50914'
+                }} />
+              </div>
+            </div>
+            <div className="card-info-popup">
+              <h3>{item.content.title}</h3>
+              <p>{item.progress}% watched</p>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+{/* 📖 CONTINUE READING SECTION */}
+{continueItems.filter(i => i.content.type === 'BLOG').length > 0 && (
+  <div style={{ ...styles.heroRowWrapper, marginTop: '32px' }}>
+    <div style={styles.netflixRowTitle}>Continue Reading</div>
+    <div style={styles.heroGrid}>
+      {continueItems.filter(i => i.content.type === 'BLOG').slice(0, 4).map((item) => (
+        <div
+          key={item.contentId}
+          className="netflix-card-container"
+          onClick={() => setActiveItem(item.content)}
+        >
+          <div className="netflix-card">
+            <div className="video-thumbnail">
+              {item.content.thumbnailPath ? (
+                <img src={item.content.thumbnailPath} alt={item.content.title} />
+              ) : (
+                <div className="placeholder-thumb">BLOG</div>
+              )}
+              <div className="play-overlay">
+                <div className="play-icon">READ</div>
+              </div>
+              {/* Progress Bar */}
+              <div style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                width: '100%',
+                height: '4px',
+                backgroundColor: 'rgba(255,255,255,0.3)',
+                zIndex: 10
+              }}>
+                <div style={{
+                  width: `${item.progress}%`,
+                  height: '100%',
+                  backgroundColor: '#c8a951'
+                }} />
+              </div>
+            </div>
+            <div className="card-info-popup">
+              <h3>{item.content.title}</h3>
+              <p>{item.progress}% read</p>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
 
 <div style={styles.heroFadeBottom} />
         </section>

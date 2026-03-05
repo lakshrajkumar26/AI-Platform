@@ -10,7 +10,7 @@ exports.trackAction = async (req, res) => {
       return res.status(400).json({ error: "Missing required fields: contentId, action, userId" });
     }
 
-    if (!["VIEW", "SAVE", "COMPLETE"].includes(action)) {
+    if (!["VIEW", "SAVE", "COMPLETE", "PROGRESS", "LIKE"].includes(action)) {
       return res.status(400).json({ error: "Invalid action type" });
     }
 
@@ -34,6 +34,8 @@ exports.trackAction = async (req, res) => {
       video.views = (video.views || 0) + 1;
     } else if (action === "SAVE") {
       video.saves = (video.saves || 0) + 1;
+    } else if (action === "LIKE") {
+      video.likes = (video.likes || 0) + 1;
     } else if (action === "COMPLETE") {
       video.completions = (video.completions || 0) + 1;
     }
@@ -83,6 +85,7 @@ exports.getStats = async (req, res) => {
     // Overall stats
     const totalViews = await UserActivity.countDocuments({ action: "VIEW" });
     const totalSaves = await UserActivity.countDocuments({ action: "SAVE" });
+    const totalLikes = await UserActivity.countDocuments({ action: "LIKE" });
     const totalCompletions = await UserActivity.countDocuments({ action: "COMPLETE" });
 
     // Completion rate (videos completed / videos viewed)
@@ -155,6 +158,7 @@ exports.getStats = async (req, res) => {
       completionRate: parseFloat(completionRate),
       totalViews,
       totalSaves,
+      totalLikes,
       totalCompletions,
       summary: {
         totalVideos,
@@ -162,6 +166,7 @@ exports.getStats = async (req, res) => {
         activeUsersToday: activeUsersToday.length,
         totalViews,
         totalSaves,
+        totalLikes,
         totalCompletions,
         completionRate: parseFloat(completionRate),
       },
@@ -178,6 +183,71 @@ exports.getStats = async (req, res) => {
     });
   } catch (err) {
     console.error("Get stats error:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ================= GET USER PROGRESS =================
+exports.getUserProgress = async (req, res) => {
+  try {
+    const { userId } = req.query;
+    if (!userId) {
+      return res.status(400).json({ error: "Missing userId" });
+    }
+
+    // Find all PROGRESS activities for this user
+    // We want the latest progress for each contentId
+    const progressItems = await UserActivity.aggregate([
+      { $match: { userId, action: "PROGRESS" } },
+      { $sort: { timestamp: -1 } },
+      {
+        $group: {
+          _id: "$contentId",
+          latestProgress: { $first: "$$ROOT" },
+        },
+      },
+      {
+        $lookup: {
+          from: "videos",
+          localField: "_id",
+          foreignField: "_id",
+          as: "content",
+        },
+      },
+      { $unwind: "$content" },
+      {
+        $project: {
+          _id: 0,
+          contentId: "$_id",
+          progress: "$latestProgress.metadata.progress",
+          timestamp: "$latestProgress.timestamp",
+          content: 1,
+        },
+      },
+      { $sort: { timestamp: -1 } },
+    ]);
+
+    // Filter out completed items (if they have a COMPLETE action later than the latest PROGRESS)
+    // Or if progress is 100%
+    const filteredProgress = [];
+    for (const item of progressItems) {
+      if (item.progress >= 100) continue;
+
+      const completion = await UserActivity.findOne({
+        userId,
+        contentId: item.contentId,
+        action: "COMPLETE",
+        timestamp: { $gt: item.timestamp },
+      });
+
+      if (!completion) {
+        filteredProgress.push(item);
+      }
+    }
+
+    res.json(filteredProgress);
+  } catch (err) {
+    console.error("Get user progress error:", err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -214,8 +284,9 @@ exports.getDashboardStats = async (req, res) => {
     const totalCompletions = await UserActivity.countDocuments({ action: "COMPLETE" });
     const completionRate = totalViews > 0 ? ((totalCompletions / totalViews) * 100).toFixed(2) : 0;
 
-    // Total saves
+    // Total saves and likes
     const totalSaves = await UserActivity.countDocuments({ action: "SAVE" });
+    const totalLikes = await UserActivity.countDocuments({ action: "LIKE" });
 
     res.json({
       totalVideos,
@@ -226,6 +297,7 @@ exports.getDashboardStats = async (req, res) => {
       completionRate: parseFloat(completionRate),
       totalViews,
       totalSaves,
+      totalLikes,
       totalCompletions,
     });
   } catch (err) {
