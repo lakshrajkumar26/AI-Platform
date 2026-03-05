@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { adminLogin, uploadVideo, getVideos, deleteVideo, type Video } from "@/services/api";
+import AnalyticsDashboard from "@/components/AnalyticsDashboard";
+import { trackAction } from "@/services/api";
 
 const CATEGORIES = [
   'EMOTIONAL', 
@@ -111,7 +113,7 @@ export default function Admin() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   
   const [contentList, setContentList] = useState<Video[]>([]);
-  const [activeTab, setActiveTab] = useState<"upload" | "manage">("upload");
+  const [activeTab, setActiveTab] = useState<"upload" | "manage" | "analytics">("upload");
   const [manageSort, setManageSort] = useState<"latest" | "oldest">("latest");
   const [filterType, setFilterType] = useState<"ALL" | "VIDEO" | "BLOG">("ALL");
   const [filterCategory, setFilterCategory] = useState<string>("ALL");
@@ -340,6 +342,12 @@ export default function Admin() {
           >
             MANAGE CONTENT
           </button>
+          <button 
+            onClick={() => setActiveTab("analytics")} 
+            style={{...styles.tabBtn, borderBottom: activeTab === "analytics" ? "4px solid #c8a951" : "none"}}
+          >
+            ANALYTICS
+          </button>
         </div>
 
         {activeTab === "upload" ? (
@@ -496,14 +504,14 @@ export default function Admin() {
                 </div>
               ) : (
                 <div
-  style={{
-    backgroundColor: '#0b0d0c',
-    border: '1px solid #333',
-    padding: '24px',
-    marginBottom: '24px',
-    borderRadius: '4px',
-  }}
->
+                  style={{
+                    backgroundColor: '#0b0d0c',
+                    border: '1px solid #333',
+                    padding: '24px',
+                    marginBottom: '24px',
+                    borderRadius: '4px',
+                  }}
+                >
                   <div style={styles.formGroup}>
                     <label style={styles.label}>UPLOAD PDF (EXTRACT CONTENT)</label>
                     <input 
@@ -532,7 +540,7 @@ export default function Admin() {
               </button>
             </form>
           </div>
-        ) : (
+        ) : activeTab === "manage" ? (
           <div style={styles.card}>
             <h2 style={styles.cardTitle}>EXISTING CONTENT</h2>
             <div style={styles.manageControls}>
@@ -674,7 +682,9 @@ export default function Admin() {
               </table>
             </div>
           </div>
-        )}
+        ) : activeTab === "analytics" ? (
+          <AnalyticsDashboard token={token} />
+        ) : null}
       </main>
     </div>
   );
@@ -848,16 +858,16 @@ const styles = {
     fontFamily: 'inherit',
   },
   fileInput: {
-  color: '#888',
-  fontSize: '12px',
-  backgroundColor: '#0b0d0c',
-  border: '1px solid #333',
-  padding: '10px',
-  width: '100%',
-  appearance: 'none',
-  WebkitAppearance: 'none',
-  MozAppearance: 'none',
-},
+    color: '#888',
+    fontSize: '12px',
+    backgroundColor: '#0b0d0c',
+    border: '1px solid #333',
+    padding: '10px',
+    width: '100%',
+    appearance: 'none',
+    WebkitAppearance: 'none',
+    MozAppearance: 'none',
+  },
   cropPanel: {
     marginTop: '14px',
     border: '1px solid #2f2f2f',

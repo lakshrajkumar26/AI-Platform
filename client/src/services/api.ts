@@ -15,6 +15,9 @@ export interface Video {
     username: string;
   };
   createdAt: string;
+  views?: number;
+  saves?: number;
+  completions?: number;
 }
 
 // Get all videos
@@ -145,5 +148,95 @@ export const adminLogin = async (
   } catch (error) {
     console.error('Error logging in:', error);
     return null;
+  }
+};
+
+// ================= ANALYTICS FUNCTIONS =================
+
+// Generate or get a unique user ID (stored in localStorage)
+const getUserId = (): string => {
+  let userId = localStorage.getItem('vms_user_id');
+  if (!userId) {
+    userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    localStorage.setItem('vms_user_id', userId);
+  }
+  return userId;
+};
+
+// Track user action (view, save, complete)
+export const trackAction = async (
+  contentId: string,
+  action: 'VIEW' | 'SAVE' | 'COMPLETE',
+  metadata?: Record<string, any>
+): Promise<boolean> => {
+  try {
+    const userId = getUserId();
+    const response = await fetch(`${API_BASE_URL}/analytics/track`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contentId,
+        action,
+        userId,
+        metadata: metadata || {},
+      }),
+    });
+
+    if (!response.ok) {
+      console.error(`Failed to track action: ${response.statusText}`);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error tracking action:', error);
+    return false;
+  }
+};
+
+// Get analytics stats for dashboard (admin only)
+export const getAnalyticsStats = async (token: string): Promise<any> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/analytics/stats`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch analytics: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching analytics stats:', error);
+    throw error;
+  }
+};
+
+// Get dashboard stats (public endpoint)
+export const getDashboardStats = async (): Promise<any> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/analytics/dashboard`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch dashboard stats: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+    throw error;
   }
 };

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Video } from '@/services/api';
+import { trackAction } from '@/services/api';
 
 interface SavedItem extends Video {
   savedAt: string;
@@ -53,6 +54,7 @@ export const useLibrary = () => {
         ...video,
         savedAt: new Date().toISOString(),
       };
+      trackAction(video._id, 'SAVE');
       return [newItem, ...prev];
     });
   }, []);

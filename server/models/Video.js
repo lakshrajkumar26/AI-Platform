@@ -42,6 +42,22 @@ const videoSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+
+  // Analytics fields
+  views: {
+    type: Number,
+    default: 0,
+  },
+
+  saves: {
+    type: Number,
+    default: 0,
+  },
+
+  completions: {
+    type: Number,
+    default: 0,
+  },
 });
 
 module.exports = mongoose.model("Video", videoSchema);

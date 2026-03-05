@@ -2,6 +2,7 @@
 import { useRoute, useLocation } from 'wouter';
 import { getSingleVideo } from '@/services/api';
 import { useLibrary } from '@/hooks/useLibrary';
+import { trackAction } from '@/services/api';
 
 export default function Video() {
   const [, params] = useRoute('/video/:id');
@@ -33,6 +34,16 @@ export default function Video() {
         });
     }
   }, [params?.id]);
+  <video
+  src={video.videoPath}
+  controls
+  controlsList="nodownload"
+  disablePictureInPicture
+  onContextMenu={(e) => e.preventDefault()}
+  onEnded={() => trackAction(video._id, 'COMPLETE')}
+  style={styles.videoEl}
+  autoPlay
+/>
 
   const handleGoBack = () => setLocation('/');
   const isBlog = video?.type === 'BLOG';

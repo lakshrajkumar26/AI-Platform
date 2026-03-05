@@ -6,6 +6,7 @@ const Admin = require("./models/Admin");
 
 const adminRoutes = require("./routes/adminRoutes");
 const videoRoutes = require("./routes/videoRoutes");
+const analyticsRoutes = require("./routes/analyticsRoutes");
 
 const app = express();
 
@@ -61,6 +62,7 @@ mongoose.connect("mongodb://127.0.0.1:27017/videoApp")
 // ROUTES
 app.use("/admin", adminRoutes);
 app.use("/videos", videoRoutes);
+app.use("/analytics", analyticsRoutes);
 
 // Health check endpoint
 app.get("/health", (req, res) => {
